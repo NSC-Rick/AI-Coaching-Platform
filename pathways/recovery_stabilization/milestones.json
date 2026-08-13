@@ -1,0 +1,136 @@
+{
+  "milestones": [
+    {
+      "milestone_id": "RS-M001",
+      "stage_id": "RS-01",
+      "title": "Discretionary spending controls active",
+      "description": "Non-essential discretionary spending has been frozen and controls are in place"
+    },
+    {
+      "milestone_id": "RS-M002",
+      "stage_id": "RS-01",
+      "title": "Non-routine expense approval control active",
+      "description": "Owner approval is required for non-routine expenses"
+    },
+    {
+      "milestone_id": "RS-M003",
+      "stage_id": "RS-01",
+      "title": "Inventory purchasing discipline active",
+      "description": "Inventory purchases are limited to confirmed or high-velocity items"
+    },
+    {
+      "milestone_id": "RS-M004",
+      "stage_id": "RS-01",
+      "title": "Rolling 14-day cash tracking active",
+      "description": "Client maintains current 14-day cash visibility"
+    },
+    {
+      "milestone_id": "RS-M005",
+      "stage_id": "RS-01",
+      "title": "Payroll aligned to current demand and agreed ceiling",
+      "description": "Staffing hours and payroll are aligned with actual demand and within agreed ceiling"
+    },
+    {
+      "milestone_id": "RS-M006",
+      "stage_id": "RS-01",
+      "title": "Approved immediate revenue adjustment implemented",
+      "description": "Any advisor-approved pricing or revenue action has been implemented"
+    },
+    {
+      "milestone_id": "RS-M007",
+      "stage_id": "RS-01",
+      "title": "Planned lender modification request prepared or initiated",
+      "description": "Client has prepared for or initiated approved lender discussion"
+    },
+    {
+      "milestone_id": "RS-M008",
+      "stage_id": "RS-02",
+      "title": "Historical customer data reviewed",
+      "description": "Client has reviewed historical customer purchase data"
+    },
+    {
+      "milestone_id": "RS-M009",
+      "stage_id": "RS-02",
+      "title": "Priority repeat/inactive customer list established",
+      "description": "Top and inactive high-value buyers have been identified"
+    },
+    {
+      "milestone_id": "RS-M010",
+      "stage_id": "RS-02",
+      "title": "Targeted customer outreach cycle completed",
+      "description": "Structured outreach to priority customers has been completed"
+    },
+    {
+      "milestone_id": "RS-M011",
+      "stage_id": "RS-02",
+      "title": "Trade-show/vendor list segmented",
+      "description": "Vendor lists have been segmented by alignment and relevance"
+    },
+    {
+      "milestone_id": "RS-M012",
+      "stage_id": "RS-02",
+      "title": "Structured vendor outreach initiated",
+      "description": "Wholesale outreach to segmented vendor list has begun"
+    },
+    {
+      "milestone_id": "RS-M013",
+      "stage_id": "RS-02",
+      "title": "Slow-moving inventory reviewed",
+      "description": "Slow-moving SKUs have been identified and reviewed"
+    },
+    {
+      "milestone_id": "RS-M014",
+      "stage_id": "RS-02",
+      "title": "Underutilized subscriptions/services reviewed",
+      "description": "Underused subscriptions and services have been identified"
+    },
+    {
+      "milestone_id": "RS-M015",
+      "stage_id": "RS-02",
+      "title": "Speculative inventory purchasing remains controlled",
+      "description": "Client continues to avoid speculative inventory purchases"
+    },
+    {
+      "milestone_id": "RS-M016",
+      "stage_id": "RS-03",
+      "title": "Weekly financial review cadence established",
+      "description": "Regular weekly financial review process is in place"
+    },
+    {
+      "milestone_id": "RS-M017",
+      "stage_id": "RS-03",
+      "title": "Weekly revenue tracking active",
+      "description": "Client is tracking weekly revenue consistently"
+    },
+    {
+      "milestone_id": "RS-M018",
+      "stage_id": "RS-03",
+      "title": "Weekly expense tracking active",
+      "description": "Client is tracking weekly expenses consistently"
+    },
+    {
+      "milestone_id": "RS-M019",
+      "stage_id": "RS-03",
+      "title": "Net weekly income review active",
+      "description": "Client is calculating and reviewing net weekly income"
+    },
+    {
+      "milestone_id": "RS-M020",
+      "stage_id": "RS-03",
+      "title": "Payroll alignment reviewed regularly",
+      "description": "Payroll alignment is reviewed as part of weekly cadence"
+    },
+    {
+      "milestone_id": "RS-M021",
+      "stage_id": "RS-03",
+      "title": "Cash position reviewed against plan",
+      "description": "Cash position is compared with plan regularly"
+    },
+    {
+      "milestone_id": "RS-M022",
+      "stage_id": "RS-03",
+      "title": "Six-month lender update commitment recorded",
+      "description": "Future lender update obligation is documented and visible"
+    }
+  ]
+}

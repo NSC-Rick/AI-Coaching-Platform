@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}My Coaching - AI Coaching Platform{% endblock %}
+
+{% block content %}
+<div class="client-portal">
+    <div class="welcome-section">
+        <h2>Welcome, {{ client.first_name }}</h2>
+        {% if business %}
+        <p class="business-name">{{ business.business_name }}</p>
+        {% endif %}
+    </div>
+
+    {% if not engagement %}
+    <div class="card">
+        <p>No active coaching engagement at this time.</p>
+    </div>
+    {% else %}
+    
+    <div class="pathway-status">
+        <div class="card">
+            <h3>{{ pathway_data.manifest.name }}</h3>
+            {% if pathway_state %}
+            <div class="status-grid">
+                <div class="status-item">
+                    <span class="label">Current Stage</span>
+                    <span class="value">{{ pathway_state.current_stage_id }}: 
+                        {% for stage in pathway_data.manifest.stages %}
+                            {% if stage.stage_id == pathway_state.current_stage_id %}
+                                {{ stage.name }}
+                            {% endif %}
+                        {% endfor %}
+                    </span>
+                </div>
+                <div class="status-item">
+                    <span class="label">Day</span>
+                    <span class="value">{{ pathway_state.current_day }} of 90</span>
+                </div>
+            </div>
+            {% if pathway_state.current_focus %}
+            <div class="focus-section">
+                <h4>Current Focus</h4>
+                <p>{{ pathway_state.current_focus }}</p>
+            </div>
+            {% endif %}
+            {% if pathway_state.current_priority_summary %}
+            <div class="priorities-section">
+                <h4>Current Priorities</h4>
+                <p>{{ pathway_state.current_priority_summary }}</p>
+            </div>
+            {% endif %}
+            {% endif %}
+        </div>
+    </div>
+
+    {% if open_commitments %}
+    <div class="commitments-section">
+        <div class="card">
+            <h3>My Commitments</h3>
+            <ul class="commitment-list">
+                {% for commitment in open_commitments %}
+                <li class="commitment-item {% if commitment.priority == 'high' %}priority-high{% endif %}">
+                    <span class="commitment-text">{{ commitment.description }}</span>
+                    {% if commitment.due_date %}
+                    <span class="commitment-due">Due: {{ commitment.due_date.strftime('%b %d') }}</span>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if learning_resources %}
+    <div class="learning-section">
+        <div class="card">
+            <h3>Recommended Resources</h3>
+            <ul class="resource-list">
+                {% for item in learning_resources %}
+                <li class="resource-item">
+                    <div class="resource-title">{{ item.resource.title }}</div>
+                    <div class="resource-meta">{{ item.resource.resource_type }} • {{ item.resource.duration }}</div>
+                    <div class="resource-description">{{ item.resource.description }}</div>
+                    {% if not item.resource.location %}
+                    <div class="resource-placeholder">Resource link will be available soon</div>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="coach-section">
+        <div class="card coach-card">
+            <h3>Ready to Talk?</h3>
+            <p>Your AI coach is here to help you make progress on your recovery plan.</p>
+            <form method="POST" action="{{ url_for('start_session', engagement_id=engagement.id) }}">
+                <button type="submit" class="btn btn-primary btn-large">
+                    Talk to My Coach
+                </button>
+            </form>
+        </div>
+    </div>
+
+    {% endif %}
+</div>
+{% endblock %}

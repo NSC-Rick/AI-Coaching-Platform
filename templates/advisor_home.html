@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Advisor Dashboard - AI Coaching Platform{% endblock %}
+
+{% block content %}
+<div class="advisor-portal">
+    <div class="welcome-section">
+        <h2>Welcome, {{ advisor.first_name }} {{ advisor.last_name }}</h2>
+        <p class="subtitle">Advisor Dashboard</p>
+    </div>
+
+    <div class="clients-section">
+        <h3>My Clients</h3>
+        
+        {% if not client_data %}
+        <div class="card">
+            <p>No active client engagements at this time.</p>
+        </div>
+        {% else %}
+        
+        <div class="client-grid">
+            {% for item in client_data %}
+            <div class="card client-card">
+                <div class="client-header">
+                    <h4>{{ item.business.business_name if item.business else item.client.first_name + ' ' + item.client.last_name }}</h4>
+                    <span class="client-name">{{ item.client.first_name }} {{ item.client.last_name }}</span>
+                </div>
+                
+                <div class="client-info">
+                    <div class="info-row">
+                        <span class="label">Pathway:</span>
+                        <span class="value">{{ item.pathway_name }}</span>
+                    </div>
+                    {% if item.pathway_state %}
+                    <div class="info-row">
+                        <span class="label">Stage:</span>
+                        <span class="value">{{ item.pathway_state.current_stage_id }} - Day {{ item.pathway_state.current_day }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="info-row">
+                        <span class="label">Status:</span>
+                        <span class="value status-{{ item.engagement.status }}">{{ item.engagement.status|title }}</span>
+                    </div>
+                </div>
+
+                <div class="client-metrics">
+                    <div class="metric">
+                        <span class="metric-value">{{ item.open_commitments_count }}</span>
+                        <span class="metric-label">Open Commitments</span>
+                    </div>
+                    {% if item.highest_risk %}
+                    <div class="metric">
+                        <span class="metric-value risk-{{ item.highest_risk.severity }}">{{ item.highest_risk.severity|upper }}</span>
+                        <span class="metric-label">Highest Risk</span>
+                    </div>
+                    {% endif %}
+                    {% if item.attention_items > 0 %}
+                    <div class="metric attention">
+                        <span class="metric-value">{{ item.attention_items }}</span>
+                        <span class="metric-label">Needs Attention</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="client-actions">
+                    <a href="{{ url_for('client_detail', engagement_id=item.engagement.id) }}" class="btn btn-primary">View Details</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

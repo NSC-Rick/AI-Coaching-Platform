@@ -1,0 +1,55 @@
+pathway_id: PATHWAY-001
+slug: recovery_stabilization
+name: Recovery & Stabilization
+version: "0.1"
+status: poc
+default_duration_days: 90
+
+purpose: >
+  Help a small business execute a structured stabilization
+  and revenue-activation plan while maintaining cash visibility,
+  operating discipline, accountability, and appropriate
+  human-advisor involvement.
+
+core_rule: >
+  This is a stabilization pathway, not an expansion pathway.
+
+stages:
+  - stage_id: RS-01
+    name: Immediate Stabilization
+    typical_days: 1-30
+    purpose: >
+      Restore immediate operating control and improve
+      short-term liquidity.
+    objectives:
+      - Establish rolling cash visibility
+      - Apply agreed spending controls
+      - Align payroll and owner compensation
+      - Execute approved near-term pricing action
+      - Prepare for lender discussion
+
+  - stage_id: RS-02
+    name: Revenue Activation & Structural Tightening
+    typical_days: 31-60
+    purpose: >
+      Generate near-term revenue from proven channels while
+      tightening inventory and expense structure.
+    objectives:
+      - Review historical customer data
+      - Conduct targeted customer outreach
+      - Execute trade show vendor outreach
+      - Reduce slow-moving inventory
+      - Eliminate underutilized subscriptions
+
+  - stage_id: RS-03
+    name: Governance & Accountability
+    typical_days: 61-90
+    purpose: >
+      Establish disciplined recurring financial review and
+      maintain accountability beyond initial stabilization.
+    objectives:
+      - Maintain weekly financial review
+      - Track revenue, expenses, and net income
+      - Review payroll alignment
+      - Monitor cash position versus plan
+      - Prepare six-month lender update

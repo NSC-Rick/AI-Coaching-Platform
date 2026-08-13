@@ -1,0 +1,88 @@
+{
+  "resources": [
+    {
+      "resource_id": "RS-R001",
+      "stage_id": "RS-01",
+      "topic": "cash_flow",
+      "title": "Cash Flow vs. Profit",
+      "resource_type": "video",
+      "location": null,
+      "duration": "5-8 minutes",
+      "description": "Short video explaining the difference between profitability and available cash",
+      "learning_objective": "Help the client understand why profitability and available cash are different concepts",
+      "when_to_recommend": [
+        "Client is confused about cash visibility",
+        "Client is preparing to use the 14-day cash view",
+        "Client expresses confusion about why profitable business has cash shortage"
+      ],
+      "follow_up_questions": [
+        "What distinction between cash and profit stood out to you?",
+        "How does that show up in your own business?"
+      ],
+      "status": "placeholder"
+    },
+    {
+      "resource_id": "RS-R002",
+      "stage_id": "RS-01",
+      "topic": "lender_preparation",
+      "title": "Preparing for a Productive Lender Conversation",
+      "resource_type": "guide",
+      "location": null,
+      "duration": "5-10 minutes",
+      "description": "Guide to help organize information and questions before a lender discussion",
+      "learning_objective": "Help the client organize information and questions before a lender discussion",
+      "when_to_recommend": [
+        "Lender preparation is an active approved objective",
+        "Client is preparing for lender discussion",
+        "Client expresses uncertainty about lender conversation"
+      ],
+      "follow_up_questions": [
+        "What do you want the lender to understand?",
+        "What questions remain for you?"
+      ],
+      "status": "placeholder"
+    },
+    {
+      "resource_id": "RS-R003",
+      "stage_id": "RS-02",
+      "topic": "customer_outreach",
+      "title": "Re-engaging Proven Customers",
+      "resource_type": "guide",
+      "location": null,
+      "duration": "5-10 minutes",
+      "description": "Guide for thoughtful, targeted outreach to existing or inactive high-value buyers",
+      "learning_objective": "Support thoughtful, targeted outreach to existing or inactive high-value buyers",
+      "when_to_recommend": [
+        "Repeat-customer activation is underway",
+        "Client is preparing customer outreach",
+        "Client needs guidance on customer prioritization"
+      ],
+      "follow_up_questions": [
+        "Which customers will you prioritize and why?",
+        "What approach will you take with each?"
+      ],
+      "status": "placeholder"
+    },
+    {
+      "resource_id": "RS-R004",
+      "stage_id": "RS-03",
+      "topic": "plan_to_actual",
+      "title": "Weekly Plan-to-Actual Review",
+      "resource_type": "guide",
+      "location": null,
+      "duration": "5-8 minutes",
+      "description": "Guide explaining the discipline of comparing actual weekly results with the operating plan",
+      "learning_objective": "Explain the discipline of comparing actual weekly results with the operating plan",
+      "when_to_recommend": [
+        "Client enters the governance/accountability phase",
+        "Client is establishing weekly review cadence",
+        "Client needs structure for financial review"
+      ],
+      "follow_up_questions": [
+        "What changed from plan?",
+        "What action follows from what you learned?"
+      ],
+      "status": "placeholder"
+    }
+  ]
+}

@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+
+{% block title %}{{ client.first_name }} {{ client.last_name }} - Client Detail{% endblock %}
+
+{% block content %}
+<div class="client-detail">
+    <div class="detail-header">
+        <div>
+            <h2>{{ business.business_name if business else client.first_name + ' ' + client.last_name }}</h2>
+            <p class="client-name">{{ client.first_name }} {{ client.last_name }}</p>
+        </div>
+        <a href="{{ url_for('advisor_home') }}" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
+
+    <div class="detail-grid">
+        <div class="detail-main">
+            
+            <div class="card">
+                <h3>Pathway Status</h3>
+                <div class="pathway-info">
+                    <p><strong>Pathway:</strong> {{ pathway_data.manifest.name }}</p>
+                    {% if pathway_state %}
+                    <p><strong>Current Stage:</strong> {{ pathway_state.current_stage_id }} - 
+                        {% for stage in pathway_data.manifest.stages %}
+                            {% if stage.stage_id == pathway_state.current_stage_id %}
+                                {{ stage.name }}
+                            {% endif %}
+                        {% endfor %}
+                    </p>
+                    <p><strong>Day:</strong> {{ pathway_state.current_day }} of 90</p>
+                    {% if pathway_state.current_focus %}
+                    <p><strong>Current Focus:</strong> {{ pathway_state.current_focus }}</p>
+                    {% endif %}
+                    {% if pathway_state.current_priority_summary %}
+                    <p><strong>Current Priorities:</strong> {{ pathway_state.current_priority_summary }}</p>
+                    {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Commitments</h3>
+                {% if commitments %}
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Description</th>
+                            <th>Due Date</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for commitment in commitments %}
+                        <tr class="status-{{ commitment.status }}">
+                            <td>{{ commitment.description }}</td>
+                            <td>{{ commitment.due_date.strftime('%Y-%m-%d') if commitment.due_date else '-' }}</td>
+                            <td><span class="badge priority-{{ commitment.priority }}">{{ commitment.priority or 'normal' }}</span></td>
+                            <td><span class="badge status-{{ commitment.status }}">{{ commitment.status }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="no-data">No commitments recorded.</p>
+                {% endif %}
+            </div>
+
+            <div class="card">
+                <h3>Risks</h3>
+                {% if risks %}
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Severity</th>
+                            <th>Status</th>
+                            <th>Advisor Attention</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for risk in risks %}
+                        <tr>
+                            <td>
+                                <strong>{{ risk.title }}</strong>
+                                {% if risk.description %}
+                                <br><small>{{ risk.description }}</small>
+                                {% endif %}
+                            </td>
+                            <td><span class="badge severity-{{ risk.severity }}">{{ risk.severity }}</span></td>
+                            <td><span class="badge status-{{ risk.status }}">{{ risk.status }}</span></td>
+                            <td>{% if risk.advisor_attention %}Yes{% else %}No{% endif %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="no-data">No risks recorded.</p>
+                {% endif %}
+            </div>
+
+            <div class="card">
+                <h3>Significant Events</h3>
+                {% if significant_events %}
+                <ul class="event-list">
+                    {% for event in significant_events %}
+                    <li class="event-item">
+                        <div class="event-date">{{ event.event_date.strftime('%Y-%m-%d') }}</div>
+                        <div class="event-content">
+                            <strong>{{ event.title }}</strong>
+                            {% if event.description %}
+                            <p>{{ event.description }}</p>
+                            {% endif %}
+                            {% if event.estimated_impact %}
+                            <p class="event-impact">Impact: {{ event.estimated_impact }}</p>
+                            {% endif %}
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="no-data">No significant events recorded.</p>
+                {% endif %}
+            </div>
+
+            <div class="card">
+                <h3>Learning Activity</h3>
+                {% if learning_records %}
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Resource</th>
+                            <th>Status</th>
+                            <th>Recommended</th>
+                            <th>Completed</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in learning_records %}
+                        <tr>
+                            <td>{{ record.resource_id }}</td>
+                            <td><span class="badge status-{{ record.status }}">{{ record.status }}</span></td>
+                            <td>{{ record.recommended_at.strftime('%Y-%m-%d') }}</td>
+                            <td>{{ record.completed_at.strftime('%Y-%m-%d') if record.completed_at else '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="no-data">No learning activity recorded.</p>
+                {% endif %}
+            </div>
+
+            <div class="card">
+                <h3>Coaching Observations</h3>
+                {% if coaching_observations %}
+                <ul class="observation-list">
+                    {% for obs in coaching_observations %}
+                    <li class="observation-item importance-{{ obs.importance }}">
+                        {{ obs.observation }}
+                        <span class="observation-date">{{ obs.created_at.strftime('%Y-%m-%d') }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="no-data">No coaching observations recorded.</p>
+                {% endif %}
+            </div>
+
+            <div class="card">
+                <h3>Recent Sessions</h3>
+                {% if sessions %}
+                <ul class="session-list">
+                    {% for session in sessions %}
+                    <li class="session-item">
+                        <div class="session-date">{{ session.started_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                        <div class="session-type">{{ session.interaction_type }}</div>
+                        {% if session.summary %}
+                        <div class="session-summary">{{ session.summary }}</div>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="no-data">No sessions recorded.</p>
+                {% endif %}
+            </div>
+
+        </div>
+
+        <div class="detail-sidebar">
+            
+            <div class="card">
+                <h3>Advisor Guidance</h3>
+                <form method="POST" action="{{ url_for('add_guidance', engagement_id=engagement.id) }}">
+                    <div class="form-group">
+                        <label for="guidance">Add Guidance</label>
+                        <textarea id="guidance" name="guidance" rows="4" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="priority">Priority</label>
+                        <select id="priority" name="priority">
+                            <option value="normal">Normal</option>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Add Guidance</button>
+                </form>
+
+                {% if advisor_guidance %}
+                <div class="guidance-history">
+                    <h4>Guidance History</h4>
+                    {% for guidance in advisor_guidance %}
+                    <div class="guidance-item status-{{ guidance.status }}">
+                        <div class="guidance-text">{{ guidance.guidance }}</div>
+                        <div class="guidance-meta">
+                            <span class="badge priority-{{ guidance.priority }}">{{ guidance.priority or 'normal' }}</span>
+                            <span class="guidance-date">{{ guidance.created_at.strftime('%Y-%m-%d') }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="card">
+                <h3>Attention Items</h3>
+                {% if attention_items %}
+                <ul class="attention-list">
+                    {% for item in attention_items %}
+                    <li class="attention-item priority-{{ item.priority }} status-{{ item.status }}">
+                        <strong>{{ item.title }}</strong>
+                        {% if item.description %}
+                        <p>{{ item.description }}</p>
+                        {% endif %}
+                        <span class="attention-date">{{ item.created_at.strftime('%Y-%m-%d') }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="no-data">No attention items.</p>
+                {% endif %}
+            </div>
+
+            <div class="card">
+                <h3>Coaching Context</h3>
+                <p class="context-description">This is the context that would be provided to the AI coach:</p>
+                <pre class="context-display">{{ context_display }}</pre>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
