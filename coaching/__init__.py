@@ -1,5 +1,5 @@
 from .engine import load_pathway, validate_pathway
-from .context import build_coaching_context
+from .context import build_coaching_context, format_context_for_display
 from .ai_service import AIService, AIServiceError
 from .prompts import build_coaching_system_prompt, build_extraction_prompt
 from .validator import ExtractionValidator, ValidationError
@@ -9,6 +9,7 @@ __all__ = [
     'load_pathway', 
     'validate_pathway', 
     'build_coaching_context',
+    'format_context_for_display',
     'AIService',
     'AIServiceError',
     'build_coaching_system_prompt',

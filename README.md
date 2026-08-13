@@ -1,8 +1,11 @@
 # AI Coaching Platform
 
-## Build 001 — Application Foundation
+## Build 002 — AI Coaching Engine & Persistent Coaching Loop
 
-This is the initial foundation build for the AI Coaching Platform Proof of Concept.
+**Current Build:** 002  
+**Status:** Complete
+
+This is the AI Coaching Platform Proof of Concept with working AI coaching loop.
 
 ### Project Purpose
 
@@ -23,18 +26,35 @@ Build 001 establishes the application foundation and demonstrates:
 - Coaching Context Builder
 - Successful deployment capability to Render
 
-**Build 001 intentionally does NOT include:**
-- OpenAI API integration
-- ElevenLabs voice interaction
-- Autonomous AI agents
-- Automated email notifications
-- External system integrations
+### Build 002 Scope
+
+Build 002 adds the AI coaching engine and demonstrates:
+
+- **OpenAI API integration** - Clean AI service abstraction
+- **Text-based coaching sessions** - Interactive coaching conversations
+- **Coaching context assembly** - Focused, relevant context for AI
+- **Session extraction** - Structured updates from conversations
+- **Validation layer** - AI outputs validated before persistence
+- **Provenance tracking** - Source tracking for coaching record entries
+- **Persistent coaching loop** - Sessions update coaching record
+- **Guardrail recognition** - PATHWAY-001 boundaries enforced
+- **Advisor guidance integration** - Human direction influences AI
+- **Duplicate handling** - Updates existing records vs creating duplicates
+
+**Build 002 intentionally does NOT include:**
+- ElevenLabs voice interaction (planned for Build 003)
+- Automated check-ins or scheduled sessions
+- Email notifications to advisors
+- Resource URL links (placeholders only)
+- Automated Pathway progression
+- Session analytics or metrics
 
 These features are planned for future builds.
 
 ## Technology Stack
 
 - **Backend:** Python 3, Flask, SQLAlchemy, Flask-Login
+- **AI:** OpenAI API (GPT-4 Turbo)
 - **Database:** SQLite (local), PostgreSQL (production via DATABASE_URL)
 - **Web Server:** Gunicorn (production)
 - **Frontend:** HTML/CSS/JavaScript (responsive, mobile-first)
@@ -78,11 +98,15 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-6. Edit `.env` and set your SECRET_KEY:
+6. Edit `.env` and set your configuration:
 ```
 SECRET_KEY=your-secret-key-here
 DATABASE_URL=
+OPENAI_API_KEY=your-openai-api-key-here
+OPENAI_MODEL=gpt-4-turbo-preview
 ```
+
+**Note:** You need an OpenAI API key for Build 002 coaching sessions. Get one at https://platform.openai.com/api-keys
 
 ### Database Initialization
 
