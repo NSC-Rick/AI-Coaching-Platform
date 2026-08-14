@@ -344,7 +344,6 @@ def start_session(engagement_id):
         initial_message = ai_service.generate_coaching_response(
             messages=[],
             system_prompt=system_prompt,
-            temperature=0.7,
             max_completion_tokens=500
         )
         
@@ -434,7 +433,6 @@ def send_message(session_id):
         response = ai_service.generate_coaching_response(
             messages=conversation_messages,
             system_prompt=system_prompt,
-            temperature=0.7,
             max_completion_tokens=800
         )
         

@@ -25,7 +25,6 @@ class AIService:
         self,
         messages: List[Dict[str, str]],
         system_prompt: str,
-        temperature: float = 0.7,
         max_completion_tokens: int = 1000
     ) -> str:
         """
@@ -34,7 +33,6 @@ class AIService:
         Args:
             messages: List of message dicts with 'role' and 'content'
             system_prompt: System instructions for the AI coach
-            temperature: Randomness in responses (0.0-1.0)
             max_completion_tokens: Maximum response length
             
         Returns:
@@ -49,7 +47,6 @@ class AIService:
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=full_messages,
-                temperature=temperature,
                 max_completion_tokens=max_completion_tokens
             )
             
@@ -101,7 +98,6 @@ Based on this session and the current context, extract structured updates follow
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
-                temperature=0.3,
                 response_format={"type": "json_object"}
             )
             

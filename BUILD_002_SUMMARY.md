@@ -751,6 +751,13 @@ The architecture maintains strict separation between platform, pathway, and coac
 **Impact:** Parameter rename only - backward compatible with all models  
 **Details:** See `BUILD_002_GPT5_MINI_PATCH.md`
 
+### Update 3: GPT-5-mini Temperature Compatibility (December 2024)
+
+**Issue:** GPT-5-mini only supports default temperature (1.0), not custom values  
+**Fix:** Removed explicit temperature parameters from all API calls  
+**Impact:** Minimal - prompts still guide behavior, slight variation in word choice  
+**Details:** See `BUILD_002_GPT5_MINI_TEMPERATURE_PATCH.md`
+
 ---
 
 **Build 002 is COMPLETE and ready for Build 003 (Voice Integration).**
