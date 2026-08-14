@@ -47,28 +47,34 @@
 </form>
 
 <script>
+// Auto-scroll to newest message on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const messagesContainer = document.getElementById('messages');
+    if (messagesContainer) {
+        // Scroll to bottom instantly to show newest messages
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+});
+
 function endSession() {
     if (confirm('Are you sure you want to end this coaching session?')) {
         document.getElementById('end-session-form').submit();
     }
 }
 
-document.getElementById('message-form').addEventListener('submit', function(e) {
-    const btn = document.getElementById('send-btn');
-    btn.disabled = true;
-    btn.textContent = 'Sending...';
-});
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('message-form').addEventListener('submit', function(e) {
+        const btn = document.getElementById('send-btn');
+        btn.disabled = true;
+        btn.textContent = 'Sending...';
+    });
 
-const messagesContainer = document.getElementById('messages');
-if (messagesContainer) {
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-}
-
-document.getElementById('message-input').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        document.getElementById('message-form').submit();
-    }
+    document.getElementById('message-input').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            document.getElementById('message-form').submit();
+        }
+    });
 });
 </script>
 
