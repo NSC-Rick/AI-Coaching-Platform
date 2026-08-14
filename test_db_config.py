@@ -22,17 +22,17 @@ def test_database_url_normalization():
             'expected': 'sqlite:///data/coaching.db'
         },
         {
-            'name': 'PostgreSQL (Render format)',
+            'name': 'PostgreSQL (Render postgres:// format)',
             'env_value': 'postgres://user:pass@host:5432/dbname',
-            'expected': 'postgresql://user:pass@host:5432/dbname'
+            'expected': 'postgresql+psycopg://user:pass@host:5432/dbname'
         },
         {
-            'name': 'PostgreSQL (already normalized)',
+            'name': 'PostgreSQL (Render postgresql:// format)',
             'env_value': 'postgresql://user:pass@host:5432/dbname',
-            'expected': 'postgresql://user:pass@host:5432/dbname'
+            'expected': 'postgresql+psycopg://user:pass@host:5432/dbname'
         },
         {
-            'name': 'PostgreSQL with psycopg dialect',
+            'name': 'PostgreSQL (already has psycopg dialect)',
             'env_value': 'postgresql+psycopg://user:pass@host:5432/dbname',
             'expected': 'postgresql+psycopg://user:pass@host:5432/dbname'
         }
@@ -48,7 +48,9 @@ def test_database_url_normalization():
         database_url = test['env_value']
         if database_url:
             if database_url.startswith('postgres://'):
-                database_url = database_url.replace('postgres://', 'postgresql://', 1)
+                database_url = database_url.replace('postgres://', 'postgresql+psycopg://', 1)
+            elif database_url.startswith('postgresql://'):
+                database_url = database_url.replace('postgresql://', 'postgresql+psycopg://', 1)
             result = database_url
         else:
             result = 'sqlite:///data/coaching.db'
@@ -70,9 +72,9 @@ def test_database_url_normalization():
         print()
         print("Database configuration correctly handles:")
         print("  - SQLite fallback when DATABASE_URL not set")
-        print("  - Render postgres:// to postgresql:// conversion")
-        print("  - Already normalized postgresql:// URLs")
-        print("  - Explicit psycopg dialect URLs")
+        print("  - Render postgres:// to postgresql+psycopg:// conversion")
+        print("  - Render postgresql:// to postgresql+psycopg:// conversion")
+        print("  - Already normalized postgresql+psycopg:// URLs")
     else:
         print("❌ SOME TESTS FAILED")
     print("=" * 60)
