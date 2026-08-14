@@ -5,20 +5,13 @@ from flask import Flask, render_template, redirect, url_for, request, flash, jso
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from dotenv import load_dotenv
 from models import db, User, Advisor, Client, Business, Engagement, PathwayState, Commitment, Risk, SignificantEvent, LearningRecord, CoachingObservation, Session, AdvisorGuidance, AdvisorAttention, SessionMessage
-from coaching import (
-    load_pathway, 
-    build_coaching_context, 
-    format_context_for_display,
-    AIService,
-    AIServiceError,
-    build_coaching_system_prompt,
-    build_extraction_prompt,
-    ExtractionValidator,
-    ValidationError,
-    apply_extraction_updates,
-    PersistenceError,
-    get_voice_service
-)
+from coaching.ai_service import AIService, AIServiceError
+from coaching.context import build_coaching_context
+from coaching.engine import load_pathway
+from coaching.prompts import build_coaching_system_prompt, build_extraction_prompt
+from coaching.validator import ExtractionValidator, ValidationError
+from coaching.persistence import apply_extraction_updates, PersistenceError
+from background_processor import trigger_session_processing
 
 logging.basicConfig(level=logging.INFO)
 
@@ -528,6 +521,9 @@ def end_session(session_id):
     elapsed = time.time() - start_time
     logging.info(f"[PERFORMANCE] Session close session={session_id}: {elapsed:.2f}s")
     logging.info(f"[PROCESSING] Session {session_id} queued for background processing")
+    
+    # Trigger background processing in separate thread
+    trigger_session_processing(app, session_id)
     
     flash('Session completed. Your progress is being processed.', 'success')
     return redirect(url_for('client_home'))
@@ -1099,6 +1095,18 @@ def seed_data():
     print('  Email: michael@example.com')
     print('  Password: client123')
     print('=' * 50)
+
+# Process any pending sessions on startup (recovery mechanism)
+@app.before_first_request
+def process_pending_sessions_on_startup():
+    """Process any sessions left in pending state from previous runs."""
+    from background_processor import process_pending_sessions_once
+    try:
+        count = process_pending_sessions_once(app)
+        if count > 0:
+            logging.info(f"[STARTUP] Triggered processing for {count} pending sessions")
+    except Exception as e:
+        logging.error(f"[STARTUP] Error processing pending sessions: {str(e)}")
 
 if __name__ == '__main__':
     app.run(debug=True)
