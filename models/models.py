@@ -174,6 +174,7 @@ class Session(db.Model):
     ended_at = db.Column(db.DateTime)
     interaction_type = db.Column(db.String(50), nullable=False, default='voice')
     status = db.Column(db.String(50), nullable=False, default='active')
+    processing_status = db.Column(db.String(50), default='none')  # none, pending, processing, complete, failed
     summary = db.Column(db.Text)
     
     messages = db.relationship('SessionMessage', backref='session', lazy=True, cascade='all, delete-orphan', order_by='SessionMessage.created_at')

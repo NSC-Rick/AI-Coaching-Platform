@@ -333,6 +333,9 @@ def add_guidance(engagement_id):
 @app.route('/session/start/<int:engagement_id>', methods=['POST'])
 @require_role('CLIENT')
 def start_session(engagement_id):
+    import time
+    start_time = time.time()
+    
     engagement = db.session.get(Engagement, engagement_id)
     
     if not engagement or engagement.client_id != current_user.client.id:
@@ -359,10 +362,13 @@ def start_session(engagement_id):
     system_prompt = build_coaching_system_prompt(context, pathway_data)
     
     try:
+        ai_start = time.time()
         initial_message = ai_service.generate_coaching_response(
             messages=[],
             system_prompt=system_prompt
         )
+        ai_elapsed = time.time() - ai_start
+        logging.info(f"[PERFORMANCE] Coaching initial response: {ai_elapsed:.1f}s")
         
         # DIAGNOSTIC CHECKPOINT 3A: Before Persistence
         print(f"[DIAGNOSTIC] Initial Message Type: {type(initial_message)}")
@@ -423,6 +429,9 @@ def coaching_session(session_id):
 @app.route('/session/<int:session_id>/message', methods=['POST'])
 @require_role('CLIENT')
 def send_message(session_id):
+    import time
+    start_time = time.time()
+    
     session = db.session.get(Session, session_id)
     
     if not session or session.engagement.client_id != current_user.client.id:
@@ -460,10 +469,13 @@ def send_message(session_id):
             for msg in session.messages
         ]
         
+        ai_start = time.time()
         response = ai_service.generate_coaching_response(
             messages=conversation_messages,
             system_prompt=system_prompt
         )
+        ai_elapsed = time.time() - ai_start
+        logging.info(f"[PERFORMANCE] Coaching response session={session_id}: {ai_elapsed:.1f}s")
         
         # DIAGNOSTIC CHECKPOINT 3A: Before Persistence
         print(f"[DIAGNOSTIC] Response Type: {type(response)}")
@@ -495,6 +507,9 @@ def send_message(session_id):
 @app.route('/session/<int:session_id>/end', methods=['POST'])
 @require_role('CLIENT')
 def end_session(session_id):
+    import time
+    start_time = time.time()
+    
     session = db.session.get(Session, session_id)
     
     if not session or session.engagement.client_id != current_user.client.id:
@@ -504,17 +519,17 @@ def end_session(session_id):
     if session.status != 'active':
         return redirect(url_for('client_home'))
     
+    # Mark session as completed and queue for background processing
     session.ended_at = datetime.utcnow()
     session.status = 'completed'
+    session.processing_status = 'pending'
     db.session.commit()
     
-    try:
-        process_session_extraction(session.id)
-        flash('Session completed. Your progress has been recorded.', 'success')
-    except Exception as e:
-        logging.error(f"Failed to process session extraction: {str(e)}")
-        flash('Session ended, but there was an issue processing the results.', 'warning')
+    elapsed = time.time() - start_time
+    logging.info(f"[PERFORMANCE] Session close session={session_id}: {elapsed:.2f}s")
+    logging.info(f"[PROCESSING] Session {session_id} queued for background processing")
     
+    flash('Session completed. Your progress is being processed.', 'success')
     return redirect(url_for('client_home'))
 
 def process_session_extraction(session_id):

@@ -178,7 +178,11 @@
                     <li class="session-item">
                         <div class="session-date">{{ session.started_at.strftime('%Y-%m-%d %H:%M') }}</div>
                         <div class="session-type">{{ session.interaction_type }}</div>
-                        {% if session.summary %}
+                        {% if session.processing_status == 'pending' or session.processing_status == 'processing' %}
+                        <div class="session-processing"><em>Processing coaching insights...</em></div>
+                        {% elif session.processing_status == 'failed' %}
+                        <div class="session-processing-failed"><em>Processing failed - can be retried</em></div>
+                        {% elif session.summary %}
                         <div class="session-summary">{{ session.summary }}</div>
                         {% endif %}
                     </li>
