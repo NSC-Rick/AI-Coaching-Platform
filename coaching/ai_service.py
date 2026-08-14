@@ -25,7 +25,7 @@ class AIService:
         self,
         messages: List[Dict[str, str]],
         system_prompt: str,
-        max_completion_tokens: int = 1000
+        max_completion_tokens: int = 2000
     ) -> str:
         """
         Generate a coaching response based on conversation history.
@@ -47,7 +47,8 @@ class AIService:
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=full_messages,
-                max_completion_tokens=max_completion_tokens
+                max_completion_tokens=max_completion_tokens,
+                reasoning_effort="low"
             )
             
             # DIAGNOSTIC CHECKPOINT 1: Raw OpenAI Response
@@ -60,7 +61,17 @@ class AIService:
             print(f"[DIAGNOSTIC] Message Content Length: {len(response.choices[0].message.content) if response.choices[0].message.content else 0}")
             print(f"[DIAGNOSTIC] Message Content Preview: {repr(response.choices[0].message.content[:100] if response.choices[0].message.content else None)}")
             
+            # Log usage information
+            if hasattr(response, 'usage') and response.usage:
+                print(f"[DIAGNOSTIC] Completion Tokens: {response.usage.completion_tokens}")
+                print(f"[DIAGNOSTIC] Prompt Tokens: {response.usage.prompt_tokens}")
+                print(f"[DIAGNOSTIC] Total Tokens: {response.usage.total_tokens}")
+            
             result = response.choices[0].message.content
+            
+            # Check for empty response with length finish_reason
+            if response.choices[0].finish_reason == "length" and not result:
+                raise AIServiceError("Model exhausted completion budget before producing text (finish_reason=length, empty content)")
             
             # DIAGNOSTIC CHECKPOINT 2: AIService Return Value
             print(f"[DIAGNOSTIC] AIService Return Type: {type(result)}")
@@ -114,10 +125,23 @@ Based on this session and the current context, extract structured updates follow
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
+                max_completion_tokens=3000,
+                reasoning_effort="low",
                 response_format={"type": "json_object"}
             )
             
+            # DIAGNOSTIC: Extraction response
+            print(f"[DIAGNOSTIC] Extraction Finish Reason: {response.choices[0].finish_reason}")
+            print(f"[DIAGNOSTIC] Extraction Content Length: {len(response.choices[0].message.content) if response.choices[0].message.content else 0}")
+            if hasattr(response, 'usage') and response.usage:
+                print(f"[DIAGNOSTIC] Extraction Completion Tokens: {response.usage.completion_tokens}")
+            
             result_text = response.choices[0].message.content
+            
+            # Check for empty response with length finish_reason
+            if response.choices[0].finish_reason == "length" and not result_text:
+                raise AIServiceError("Model exhausted completion budget during extraction (finish_reason=length, empty content)")
+            
             result = json.loads(result_text)
             
             return result

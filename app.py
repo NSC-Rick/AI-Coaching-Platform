@@ -343,8 +343,7 @@ def start_session(engagement_id):
     try:
         initial_message = ai_service.generate_coaching_response(
             messages=[],
-            system_prompt=system_prompt,
-            max_completion_tokens=500
+            system_prompt=system_prompt
         )
         
         # DIAGNOSTIC CHECKPOINT 3A: Before Persistence
@@ -445,8 +444,7 @@ def send_message(session_id):
         
         response = ai_service.generate_coaching_response(
             messages=conversation_messages,
-            system_prompt=system_prompt,
-            max_completion_tokens=800
+            system_prompt=system_prompt
         )
         
         # DIAGNOSTIC CHECKPOINT 3A: Before Persistence

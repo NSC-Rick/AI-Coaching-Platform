@@ -758,6 +758,13 @@ The architecture maintains strict separation between platform, pathway, and coac
 **Impact:** Minimal - prompts still guide behavior, slight variation in word choice  
 **Details:** See `BUILD_002_GPT5_MINI_TEMPERATURE_PATCH.md`
 
+### Update 4: GPT-5-mini Empty Response Fix (December 2024)
+
+**Issue:** GPT-5-mini exhausted completion budget before producing text (finish_reason=length, empty content)  
+**Fix:** Increased max_completion_tokens to 2000/3000, added reasoning_effort="low", added empty response detection  
+**Impact:** Fixes blank coach messages, provides better error handling  
+**Details:** See `BUILD_002_GPT5_MINI_EMPTY_RESPONSE_FIX.md`
+
 ---
 
 **Build 002 is COMPLETE and ready for Build 003 (Voice Integration).**
