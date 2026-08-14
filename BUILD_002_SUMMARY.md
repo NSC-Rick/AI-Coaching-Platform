@@ -64,7 +64,7 @@ The application owns persistent state. The AI model provides reasoning but does 
 ### Files Modified
 
 **Configuration:**
-- `requirements.txt` - Added `openai==1.54.4` (updated from 1.12.0 for Python 3.14 compatibility)
+- `requirements.txt` - Added `openai==1.54.4` + `httpx==0.27.2` (pinned for compatibility)
 - `.env.example` - Added `OPENAI_API_KEY` and `OPENAI_MODEL`
 
 **Models:**
@@ -738,10 +738,10 @@ The architecture maintains strict separation between platform, pathway, and coac
 ## Deployment Compatibility Update
 
 **Date:** December 2024  
-**Issue:** OpenAI SDK 1.12.0 incompatible with Python 3.14/modern httpx  
-**Fix:** Updated to OpenAI SDK 1.54.4  
+**Issue:** OpenAI SDK incompatible with httpx >= 0.28 (proxies argument removed)  
+**Fix:** Updated to OpenAI SDK 1.54.4 + pinned httpx==0.27.2  
 **Impact:** None - same API interface, no code changes  
-**Details:** See `BUILD_002_OPENAI_SDK_FIX.md`
+**Details:** See `BUILD_002_OPENAI_HTTPX_FIX.md`
 
 ---
 

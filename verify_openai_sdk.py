@@ -31,6 +31,34 @@ def verify_openai_import():
         print()
         return False
 
+def verify_httpx_version():
+    """Verify httpx version is compatible."""
+    try:
+        import httpx
+        print(f"✓ httpx imported successfully")
+        print(f"  Version: {httpx.__version__}")
+        
+        # Check if version is compatible (< 0.28)
+        version_parts = httpx.__version__.split('.')
+        major = int(version_parts[0])
+        minor = int(version_parts[1]) if len(version_parts) > 1 else 0
+        
+        if major == 0 and minor >= 28:
+            print(f"  ⚠ WARNING: httpx {httpx.__version__} may be incompatible")
+            print(f"  OpenAI SDK requires httpx < 0.28 (proxies argument removed in 0.28+)")
+            print(f"  Recommended: httpx==0.27.2")
+            print()
+            return False
+        else:
+            print(f"  ✓ Version compatible with OpenAI SDK")
+            print()
+            return True
+    except ImportError as e:
+        print(f"✗ Failed to import httpx")
+        print(f"  Error: {e}")
+        print()
+        return False
+
 def verify_openai_client():
     """Verify OpenAI client can be instantiated."""
     try:
@@ -148,6 +176,9 @@ def main():
     
     # Test 1: Import
     results.append(verify_openai_import())
+    
+    # Test 1b: httpx version
+    results.append(verify_httpx_version())
     
     # Test 2: Client class
     results.append(verify_openai_client())
