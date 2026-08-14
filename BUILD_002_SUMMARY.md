@@ -64,7 +64,7 @@ The application owns persistent state. The AI model provides reasoning but does 
 ### Files Modified
 
 **Configuration:**
-- `requirements.txt` - Added `openai==1.12.0`
+- `requirements.txt` - Added `openai==1.54.4` (updated from 1.12.0 for Python 3.14 compatibility)
 - `.env.example` - Added `OPENAI_API_KEY` and `OPENAI_MODEL`
 
 **Models:**
@@ -732,5 +732,17 @@ Build 002 successfully implements the first working AI coaching loop with persis
 10. **Error Resilience** - Graceful degradation on AI failures
 
 The architecture maintains strict separation between platform, pathway, and coaching record. The AI model provides reasoning but the application owns persistent state.
+
+---
+
+## Deployment Compatibility Update
+
+**Date:** December 2024  
+**Issue:** OpenAI SDK 1.12.0 incompatible with Python 3.14/modern httpx  
+**Fix:** Updated to OpenAI SDK 1.54.4  
+**Impact:** None - same API interface, no code changes  
+**Details:** See `BUILD_002_OPENAI_SDK_FIX.md`
+
+---
 
 **Build 002 is COMPLETE and ready for Build 003 (Voice Integration).**

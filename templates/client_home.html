@@ -95,11 +95,16 @@
         <div class="card coach-card">
             <h3>Ready to Talk?</h3>
             <p>Your AI coach is here to help you make progress on your recovery plan.</p>
-            <form method="POST" action="{{ url_for('start_session', engagement_id=engagement.id) }}">
-                <button type="submit" class="btn btn-primary btn-large">
-                    Talk to My Coach
-                </button>
-            </form>
+            <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                <a href="{{ url_for('voice_coaching', engagement_id=engagement.id) }}" class="btn btn-primary btn-large" style="text-decoration: none;">
+                    🎙️ Voice Coaching
+                </a>
+                <form method="POST" action="{{ url_for('start_session', engagement_id=engagement.id) }}" style="margin: 0;">
+                    <button type="submit" class="btn btn-secondary btn-large">
+                        💬 Text Coaching
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 

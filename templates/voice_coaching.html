@@ -1,0 +1,382 @@
+{% extends "base.html" %}
+
+{% block title %}Voice Coaching - AI Coaching Platform{% endblock %}
+
+{% block head %}
+<style>
+    .voice-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .voice-status {
+        text-align: center;
+        padding: 40px 20px;
+        background: #f8f9fa;
+        border-radius: 12px;
+        margin-bottom: 30px;
+    }
+    
+    .voice-status h2 {
+        margin: 0 0 10px 0;
+        color: #333;
+    }
+    
+    .status-indicator {
+        font-size: 18px;
+        color: #666;
+        margin: 10px 0;
+    }
+    
+    .status-indicator.connecting {
+        color: #ffc107;
+    }
+    
+    .status-indicator.connected {
+        color: #28a745;
+    }
+    
+    .status-indicator.speaking {
+        color: #007bff;
+        font-weight: 600;
+    }
+    
+    .status-indicator.listening {
+        color: #17a2b8;
+        font-weight: 600;
+    }
+    
+    .status-indicator.error {
+        color: #dc3545;
+    }
+    
+    .microphone-icon {
+        font-size: 80px;
+        margin: 20px 0;
+    }
+    
+    .microphone-icon.active {
+        animation: pulse 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    
+    .voice-controls {
+        text-align: center;
+        margin: 30px 0;
+    }
+    
+    .btn-voice {
+        padding: 15px 40px;
+        font-size: 18px;
+        border-radius: 50px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s;
+        min-width: 200px;
+    }
+    
+    .btn-voice:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .btn-start {
+        background: #28a745;
+        color: white;
+    }
+    
+    .btn-start:hover:not(:disabled) {
+        background: #218838;
+    }
+    
+    .btn-end {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .btn-end:hover:not(:disabled) {
+        background: #c82333;
+    }
+    
+    .context-info {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border: 1px solid #dee2e6;
+    }
+    
+    .context-info h4 {
+        margin: 0 0 15px 0;
+        color: #495057;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .context-item {
+        margin: 8px 0;
+        font-size: 14px;
+        color: #666;
+    }
+    
+    .context-item strong {
+        color: #333;
+    }
+    
+    .error-message {
+        background: #f8d7da;
+        color: #721c24;
+        padding: 15px;
+        border-radius: 8px;
+        margin: 20px 0;
+        border: 1px solid #f5c6cb;
+    }
+    
+    .loading {
+        text-align: center;
+        padding: 40px;
+    }
+    
+    .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #007bff;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="voice-container">
+    <div class="context-info">
+        <h4>Current Focus</h4>
+        <div class="context-item"><strong>Pathway:</strong> {{ pathway_data.manifest.name }}</div>
+        {% if pathway_state %}
+        <div class="context-item"><strong>Stage:</strong> {{ pathway_state.current_stage_id }}</div>
+        <div class="context-item"><strong>Day:</strong> {{ pathway_state.current_day }} of 90</div>
+        {% if pathway_state.current_focus %}
+        <div class="context-item"><strong>Focus:</strong> {{ pathway_state.current_focus }}</div>
+        {% endif %}
+        {% endif %}
+    </div>
+    
+    <div class="voice-status">
+        <h2>My Coach</h2>
+        <div class="microphone-icon" id="micIcon">🎙️</div>
+        <div class="status-indicator" id="statusText">Ready to start</div>
+    </div>
+    
+    <div class="voice-controls">
+        <button id="startBtn" class="btn-voice btn-start" onclick="startVoiceSession()">
+            Start Conversation
+        </button>
+        <button id="endBtn" class="btn-voice btn-end" onclick="endVoiceSession()" style="display: none;">
+            End Conversation
+        </button>
+    </div>
+    
+    <div id="errorContainer"></div>
+</div>
+
+<script src="https://unpkg.com/@elevenlabs/client@0.1.0/dist/elevenlabs-client.umd.js"></script>
+<script>
+    let conversation = null;
+    let sessionId = null;
+    let conversationStartTime = null;
+    
+    const engagementId = {{ engagement.id }};
+    const statusText = document.getElementById('statusText');
+    const micIcon = document.getElementById('micIcon');
+    const startBtn = document.getElementById('startBtn');
+    const endBtn = document.getElementById('endBtn');
+    const errorContainer = document.getElementById('errorContainer');
+    
+    function updateStatus(text, className = '') {
+        statusText.textContent = text;
+        statusText.className = 'status-indicator ' + className;
+    }
+    
+    function showError(message) {
+        errorContainer.innerHTML = `<div class="error-message">${message}</div>`;
+    }
+    
+    function clearError() {
+        errorContainer.innerHTML = '';
+    }
+    
+    async function startVoiceSession() {
+        try {
+            clearError();
+            updateStatus('Requesting microphone access...', 'connecting');
+            startBtn.disabled = true;
+            
+            await navigator.mediaDevices.getUserMedia({ audio: true });
+            
+            updateStatus('Initializing session...', 'connecting');
+            
+            const response = await fetch(`/voice/session/init/${engagementId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to initialize session');
+            }
+            
+            const data = await response.json();
+            sessionId = data.session_id;
+            conversationStartTime = new Date();
+            
+            updateStatus('Connecting to coach...', 'connecting');
+            
+            const { Conversation } = window.ElevenLabsClient;
+            
+            conversation = await Conversation.startSession({
+                signedUrl: data.signed_url,
+                onConnect: () => {
+                    updateStatus('Connected - Listening...', 'connected listening');
+                    micIcon.classList.add('active');
+                    startBtn.style.display = 'none';
+                    endBtn.style.display = 'inline-block';
+                    endBtn.disabled = false;
+                },
+                onDisconnect: () => {
+                    updateStatus('Disconnected', '');
+                    micIcon.classList.remove('active');
+                    handleSessionEnd();
+                },
+                onError: (error) => {
+                    console.error('ElevenLabs error:', error);
+                    showError('Connection error: ' + (error.message || 'Unknown error'));
+                    updateStatus('Error', 'error');
+                    micIcon.classList.remove('active');
+                    startBtn.disabled = false;
+                    startBtn.style.display = 'inline-block';
+                    endBtn.style.display = 'none';
+                },
+                onModeChange: (mode) => {
+                    if (mode.mode === 'speaking') {
+                        updateStatus('Coach is speaking...', 'speaking');
+                    } else {
+                        updateStatus('Listening...', 'listening');
+                    }
+                }
+            });
+            
+        } catch (error) {
+            console.error('Failed to start voice session:', error);
+            showError('Failed to start conversation: ' + error.message);
+            updateStatus('Failed to start', 'error');
+            startBtn.disabled = false;
+        }
+    }
+    
+    async function endVoiceSession() {
+        if (!conversation) return;
+        
+        try {
+            updateStatus('Ending session...', 'connecting');
+            endBtn.disabled = true;
+            
+            await conversation.endSession();
+            conversation = null;
+            
+            await completeSession();
+            
+        } catch (error) {
+            console.error('Error ending session:', error);
+            showError('Error ending session: ' + error.message);
+            await cancelSession();
+        }
+    }
+    
+    async function completeSession() {
+        if (!sessionId) {
+            window.location.href = '/client';
+            return;
+        }
+        
+        try {
+            updateStatus('Processing conversation...', 'connecting');
+            
+            const conversationData = {
+                session_id: sessionId,
+                duration: conversationStartTime ? Math.floor((new Date() - conversationStartTime) / 1000) : null,
+                status: 'completed',
+                messages: []
+            };
+            
+            const response = await fetch(`/voice/session/${sessionId}/complete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(conversationData)
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to complete session');
+            }
+            
+            updateStatus('Session complete!', 'connected');
+            
+            setTimeout(() => {
+                window.location.href = '/client';
+            }, 2000);
+            
+        } catch (error) {
+            console.error('Error completing session:', error);
+            showError('Session ended but there was an error processing it.');
+            setTimeout(() => {
+                window.location.href = '/client';
+            }, 3000);
+        }
+    }
+    
+    async function cancelSession() {
+        if (!sessionId) {
+            window.location.href = '/client';
+            return;
+        }
+        
+        try {
+            await fetch(`/voice/session/${sessionId}/cancel`, {
+                method: 'POST'
+            });
+        } catch (error) {
+            console.error('Error cancelling session:', error);
+        }
+        
+        window.location.href = '/client';
+    }
+    
+    async function handleSessionEnd() {
+        if (sessionId) {
+            await completeSession();
+        }
+    }
+    
+    window.addEventListener('beforeunload', (e) => {
+        if (conversation && sessionId) {
+            cancelSession();
+        }
+    });
+</script>
+{% endblock %}

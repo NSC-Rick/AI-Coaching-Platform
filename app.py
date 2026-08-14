@@ -16,7 +16,8 @@ from coaching import (
     ExtractionValidator,
     ValidationError,
     apply_extraction_updates,
-    PersistenceError
+    PersistenceError,
+    get_voice_service
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -141,6 +142,27 @@ def client_home():
                          pathway_data=pathway_data,
                          open_commitments=open_commitments,
                          learning_resources=learning_resources)
+
+@app.route('/voice/coaching/<int:engagement_id>')
+@require_role('CLIENT')
+def voice_coaching(engagement_id):
+    """
+    Voice coaching page - Build 003.
+    Renders the voice interface for ElevenLabs integration.
+    """
+    engagement = db.session.get(Engagement, engagement_id)
+    
+    if not engagement or engagement.client_id != current_user.client.id:
+        flash('Access denied.', 'error')
+        return redirect(url_for('client_home'))
+    
+    pathway_data = load_pathway(engagement.pathway_id)
+    pathway_state = engagement.pathway_state
+    
+    return render_template('voice_coaching.html',
+                         engagement=engagement,
+                         pathway_data=pathway_data,
+                         pathway_state=pathway_state)
 
 @app.route('/advisor/home')
 @require_role('ADVISOR')
@@ -564,6 +586,187 @@ def debug_session(session_id):
     }
     
     return jsonify(debug_info)
+
+# ============================================================================
+# BUILD 003 - VOICE SESSION ROUTES
+# ============================================================================
+
+@app.route('/voice/session/init/<int:engagement_id>', methods=['POST'])
+@require_role('CLIENT')
+def init_voice_session(engagement_id):
+    """
+    Initialize a voice session and return configuration for ElevenLabs.
+    
+    This route:
+    1. Validates client access
+    2. Creates a Session record with interaction_type='voice'
+    3. Builds coaching context
+    4. Generates ElevenLabs signed URL
+    5. Returns configuration for client-side voice initialization
+    """
+    engagement = db.session.get(Engagement, engagement_id)
+    
+    if not engagement or engagement.client_id != current_user.client.id:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    try:
+        voice_service = get_voice_service()
+    except Exception as e:
+        logging.error(f"Voice service initialization failed: {str(e)}")
+        return jsonify({'error': 'Voice service not available'}), 503
+    
+    session = Session(
+        engagement_id=engagement_id,
+        started_at=datetime.utcnow(),
+        interaction_type='voice',
+        status='active'
+    )
+    db.session.add(session)
+    db.session.commit()
+    
+    try:
+        context = build_coaching_context(engagement_id)
+        pathway_data = load_pathway(engagement.pathway_id)
+        pathway_state = engagement.pathway_state
+        
+        signed_url_data = voice_service.generate_signed_url()
+        
+        session_config = voice_service.build_session_config(
+            client_name=engagement.client.user.first_name or engagement.client.user.email.split('@')[0],
+            business_name=engagement.business.business_name,
+            pathway_name=pathway_data.get('name', 'Recovery & Stabilization'),
+            current_stage=pathway_state.current_stage_id if pathway_state else 'RS-01',
+            current_day=pathway_state.current_day if pathway_state else 1,
+            coaching_context=format_context_for_display(context),
+            session_id=str(session.id),
+            user_id=str(current_user.id)
+        )
+        
+        response_data = {
+            'session_id': session.id,
+            'signed_url': signed_url_data['signed_url'],
+            'config': session_config
+        }
+        
+        logging.info(f"Voice session {session.id} initialized for engagement {engagement_id}")
+        
+        return jsonify(response_data), 200
+        
+    except Exception as e:
+        logging.error(f"Failed to initialize voice session: {str(e)}")
+        db.session.delete(session)
+        db.session.commit()
+        return jsonify({'error': 'Failed to initialize voice session'}), 500
+
+@app.route('/voice/session/<int:session_id>/complete', methods=['POST'])
+@require_role('CLIENT')
+def complete_voice_session(session_id):
+    """
+    Complete a voice session and process the conversation.
+    
+    This route:
+    1. Receives conversation data from the client
+    2. Normalizes it into SessionMessage format
+    3. Marks the session as completed
+    4. Triggers the existing Build 002 extraction pipeline
+    """
+    session = db.session.get(Session, session_id)
+    
+    if not session or session.engagement.client_id != current_user.client.id:
+        return jsonify({'error': 'Session not found or access denied'}), 403
+    
+    if session.status != 'active':
+        return jsonify({'error': 'Session is not active'}), 400
+    
+    if session.interaction_type != 'voice':
+        return jsonify({'error': 'Not a voice session'}), 400
+    
+    try:
+        conversation_data = request.get_json()
+        
+        if not conversation_data:
+            return jsonify({'error': 'No conversation data provided'}), 400
+        
+        voice_service = get_voice_service()
+        
+        if not voice_service.validate_conversation_data(conversation_data):
+            return jsonify({'error': 'Invalid conversation data'}), 400
+        
+        messages = voice_service.normalize_conversation_to_messages(conversation_data)
+        
+        for msg_data in messages:
+            session_msg = SessionMessage(
+                session_id=session_id,
+                role=msg_data.get('role', 'user'),
+                content=msg_data.get('content', ''),
+                created_at=msg_data.get('timestamp') or datetime.utcnow()
+            )
+            db.session.add(session_msg)
+        
+        metadata = voice_service.get_conversation_metadata(conversation_data)
+        
+        session.ended_at = datetime.utcnow()
+        session.status = 'completed'
+        db.session.commit()
+        
+        logging.info(f"Voice session {session_id} completed. Messages: {len(messages)}")
+        
+        try:
+            process_session_extraction(session.id)
+            
+            return jsonify({
+                'status': 'success',
+                'message': 'Voice session completed and processed',
+                'session_id': session.id,
+                'metadata': metadata
+            }), 200
+            
+        except Exception as e:
+            logging.error(f"Extraction failed for voice session {session_id}: {str(e)}")
+            return jsonify({
+                'status': 'partial_success',
+                'message': 'Session saved but extraction failed',
+                'session_id': session.id,
+                'error': str(e)
+            }), 200
+        
+    except Exception as e:
+        logging.error(f"Failed to complete voice session {session_id}: {str(e)}")
+        return jsonify({'error': 'Failed to process voice session'}), 500
+
+@app.route('/voice/session/<int:session_id>/cancel', methods=['POST'])
+@require_role('CLIENT')
+def cancel_voice_session(session_id):
+    """
+    Cancel an interrupted voice session safely.
+    
+    This handles cases where the client closes the browser or the
+    connection is lost before normal completion.
+    """
+    session = db.session.get(Session, session_id)
+    
+    if not session or session.engagement.client_id != current_user.client.id:
+        return jsonify({'error': 'Session not found or access denied'}), 403
+    
+    if session.status != 'active':
+        return jsonify({'error': 'Session is not active'}), 400
+    
+    try:
+        session.ended_at = datetime.utcnow()
+        session.status = 'cancelled'
+        session.summary = 'Session interrupted'
+        db.session.commit()
+        
+        logging.info(f"Voice session {session_id} cancelled")
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Session cancelled'
+        }), 200
+        
+    except Exception as e:
+        logging.error(f"Failed to cancel voice session {session_id}: {str(e)}")
+        return jsonify({'error': 'Failed to cancel session'}), 500
 
 @app.cli.command('init-db')
 def init_db():

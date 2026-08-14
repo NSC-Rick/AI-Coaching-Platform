@@ -4,6 +4,7 @@ from .ai_service import AIService, AIServiceError
 from .prompts import build_coaching_system_prompt, build_extraction_prompt
 from .validator import ExtractionValidator, ValidationError
 from .persistence import apply_extraction_updates, PersistenceError
+from .voice_service import VoiceService, get_voice_service
 
 __all__ = [
     'load_pathway', 
@@ -17,5 +18,7 @@ __all__ = [
     'ExtractionValidator',
     'ValidationError',
     'apply_extraction_updates',
-    'PersistenceError'
+    'PersistenceError',
+    'VoiceService',
+    'get_voice_service'
 ]

@@ -1,11 +1,11 @@
 # AI Coaching Platform
 
-## Build 002 — AI Coaching Engine & Persistent Coaching Loop
+## Build 003 — ElevenLabs Voice Integration
 
-**Current Build:** 002  
+**Current Build:** 003  
 **Status:** Complete
 
-This is the AI Coaching Platform Proof of Concept with working AI coaching loop.
+This is the AI Coaching Platform Proof of Concept with voice-based coaching using ElevenLabs Conversational AI.
 
 ### Project Purpose
 
@@ -49,12 +49,36 @@ Build 002 adds the AI coaching engine and demonstrates:
 - Automated Pathway progression
 - Session analytics or metrics
 
+### Build 003 Scope
+
+Build 003 adds voice-based coaching and demonstrates:
+
+- **ElevenLabs integration** - Voice conversational AI agent
+- **Voice session management** - Server-side session initialization and completion
+- **Signed URL authentication** - Secure ElevenLabs agent access
+- **Dynamic context injection** - Client context provided to voice agent
+- **Voice-to-text normalization** - Voice conversations normalized to SessionMessage format
+- **Unified extraction pipeline** - Voice sessions use same Build 002 extraction
+- **Dual interaction modes** - Voice and text coaching both available
+- **Mobile-first voice UI** - Simple, accessible voice interface
+- **Session continuity** - Voice sessions persist to Coaching Record
+- **Client isolation** - Voice sessions respect authorization boundaries
+
+**Build 003 intentionally does NOT include:**
+- Automated outbound voice calls
+- Scheduled check-ins via voice
+- Voice analytics or transcription storage
+- Native mobile app
+- Multiple voice agents
+- Voice cloning or custom training
+
 These features are planned for future builds.
 
 ## Technology Stack
 
 - **Backend:** Python 3, Flask, SQLAlchemy, Flask-Login
 - **AI:** OpenAI API (GPT-4 Turbo)
+- **Voice:** ElevenLabs Conversational AI
 - **Database:** SQLite (local), PostgreSQL (production via DATABASE_URL)
 - **Web Server:** Gunicorn (production)
 - **Frontend:** HTML/CSS/JavaScript (responsive, mobile-first)
@@ -104,9 +128,13 @@ SECRET_KEY=your-secret-key-here
 DATABASE_URL=
 OPENAI_API_KEY=your-openai-api-key-here
 OPENAI_MODEL=gpt-4-turbo-preview
+ELEVENLABS_API_KEY=your-elevenlabs-api-key-here
+ELEVENLABS_AGENT_ID=your-elevenlabs-agent-id-here
 ```
 
-**Note:** You need an OpenAI API key for Build 002 coaching sessions. Get one at https://platform.openai.com/api-keys
+**Note:** 
+- You need an OpenAI API key for Build 002 coaching sessions. Get one at https://platform.openai.com/api-keys
+- You need an ElevenLabs API key and Agent ID for Build 003 voice coaching. Create an agent at https://elevenlabs.io/app/agents
 
 ### Database Initialization
 

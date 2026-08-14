@@ -61,6 +61,22 @@ In your Render Web Service, go to "Environment" and add:
    - If not, copy the Internal Database URL from your PostgreSQL service
    - Format: `postgresql://user:password@host/database`
 
+3. **OPENAI_API_KEY** (Required for Build 002 text coaching)
+   - Get from: https://platform.openai.com/api-keys
+   - Value: Your OpenAI API key (starts with `sk-`)
+
+4. **OPENAI_MODEL** (Optional, defaults to gpt-4-turbo-preview)
+   - Value: `gpt-4-turbo-preview` or `gpt-4o`
+
+5. **ELEVENLABS_API_KEY** (Required for Build 003 voice coaching)
+   - Get from: https://elevenlabs.io/app/settings/api-keys
+   - Value: Your ElevenLabs API key
+
+6. **ELEVENLABS_AGENT_ID** (Required for Build 003 voice coaching)
+   - Create agent at: https://elevenlabs.io/app/agents
+   - Configure agent with appropriate voice and settings
+   - Value: Your agent ID (e.g., `agent_abc123...`)
+
 ### Step 5: Deploy
 
 1. Click "Manual Deploy" → "Deploy latest commit"
