@@ -26,7 +26,7 @@ class AIService:
         messages: List[Dict[str, str]],
         system_prompt: str,
         temperature: float = 0.7,
-        max_tokens: int = 1000
+        max_completion_tokens: int = 1000
     ) -> str:
         """
         Generate a coaching response based on conversation history.
@@ -35,7 +35,7 @@ class AIService:
             messages: List of message dicts with 'role' and 'content'
             system_prompt: System instructions for the AI coach
             temperature: Randomness in responses (0.0-1.0)
-            max_tokens: Maximum response length
+            max_completion_tokens: Maximum response length
             
         Returns:
             str: The AI coach's response
@@ -50,7 +50,7 @@ class AIService:
                 model=self.model,
                 messages=full_messages,
                 temperature=temperature,
-                max_tokens=max_tokens
+                max_completion_tokens=max_completion_tokens
             )
             
             return response.choices[0].message.content
@@ -126,7 +126,7 @@ Based on this session and the current context, extract structured updates follow
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[{"role": "user", "content": "Test"}],
-                max_tokens=5
+                max_completion_tokens=5
             )
             return True
         except Exception:

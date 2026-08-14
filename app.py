@@ -345,7 +345,7 @@ def start_session(engagement_id):
             messages=[],
             system_prompt=system_prompt,
             temperature=0.7,
-            max_tokens=500
+            max_completion_tokens=500
         )
         
         assistant_msg = SessionMessage(
@@ -435,7 +435,7 @@ def send_message(session_id):
             messages=conversation_messages,
             system_prompt=system_prompt,
             temperature=0.7,
-            max_tokens=800
+            max_completion_tokens=800
         )
         
         assistant_msg = SessionMessage(

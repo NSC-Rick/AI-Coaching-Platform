@@ -735,13 +735,21 @@ The architecture maintains strict separation between platform, pathway, and coac
 
 ---
 
-## Deployment Compatibility Update
+## Deployment Compatibility Updates
 
-**Date:** December 2024  
+### Update 1: httpx Compatibility (December 2024)
+
 **Issue:** OpenAI SDK incompatible with httpx >= 0.28 (proxies argument removed)  
 **Fix:** Updated to OpenAI SDK 1.54.4 + pinned httpx==0.27.2  
 **Impact:** None - same API interface, no code changes  
 **Details:** See `BUILD_002_OPENAI_HTTPX_FIX.md`
+
+### Update 2: GPT-5-mini API Compatibility (December 2024)
+
+**Issue:** GPT-5-mini requires `max_completion_tokens` instead of deprecated `max_tokens`  
+**Fix:** Replaced `max_tokens` with `max_completion_tokens` in AIService  
+**Impact:** Parameter rename only - backward compatible with all models  
+**Details:** See `BUILD_002_GPT5_MINI_PATCH.md`
 
 ---
 
