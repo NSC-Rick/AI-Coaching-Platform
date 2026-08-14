@@ -25,7 +25,7 @@ Ensure the following files are in your repository:
    - **Environment:** Python 3
    - **Python Version:** 3.12 or higher (3.14 supported)
    - **Build Command:** `pip install -r requirements.txt && python init_render.py`
-   - **Start Command:** `gunicorn app:app`
+   - **Start Command:** Auto-detected from Procfile (`gunicorn --timeout 120 app:app`)
    - **Instance Type:** Free (for testing) or paid tier
 
 **Note:** The application uses psycopg 3 for PostgreSQL connectivity, which is compatible with Python 3.14+
