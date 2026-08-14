@@ -11,7 +11,10 @@
 
     <div class="session-container">
         <div class="messages-container" id="messages">
+            <!-- DIAGNOSTIC CHECKPOINT 4: Template Rendering -->
+            <!-- Total messages: {{ messages|length }} -->
             {% for message in messages %}
+            <!-- Message {{ loop.index }}: role={{ message.role }}, content_length={{ message.content|length if message.content else 0 }} -->
             <div class="message message-{{ message.role }}">
                 <div class="message-label">
                     {% if message.role == 'user' %}You{% else %}Coach{% endif %}

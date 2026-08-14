@@ -50,7 +50,23 @@ class AIService:
                 max_completion_tokens=max_completion_tokens
             )
             
-            return response.choices[0].message.content
+            # DIAGNOSTIC CHECKPOINT 1: Raw OpenAI Response
+            print(f"[DIAGNOSTIC] OpenAI Response ID: {response.id}")
+            print(f"[DIAGNOSTIC] Model: {response.model}")
+            print(f"[DIAGNOSTIC] Finish Reason: {response.choices[0].finish_reason}")
+            print(f"[DIAGNOSTIC] Choices Count: {len(response.choices)}")
+            print(f"[DIAGNOSTIC] Message Role: {response.choices[0].message.role}")
+            print(f"[DIAGNOSTIC] Message Content Type: {type(response.choices[0].message.content)}")
+            print(f"[DIAGNOSTIC] Message Content Length: {len(response.choices[0].message.content) if response.choices[0].message.content else 0}")
+            print(f"[DIAGNOSTIC] Message Content Preview: {repr(response.choices[0].message.content[:100] if response.choices[0].message.content else None)}")
+            
+            result = response.choices[0].message.content
+            
+            # DIAGNOSTIC CHECKPOINT 2: AIService Return Value
+            print(f"[DIAGNOSTIC] AIService Return Type: {type(result)}")
+            print(f"[DIAGNOSTIC] AIService Return Value: {repr(result[:100] if result else result)}")
+            
+            return result
             
         except Exception as e:
             raise AIServiceError(f"Failed to generate coaching response: {str(e)}")

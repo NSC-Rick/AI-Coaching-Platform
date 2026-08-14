@@ -347,6 +347,11 @@ def start_session(engagement_id):
             max_completion_tokens=500
         )
         
+        # DIAGNOSTIC CHECKPOINT 3A: Before Persistence
+        print(f"[DIAGNOSTIC] Initial Message Type: {type(initial_message)}")
+        print(f"[DIAGNOSTIC] Initial Message Length: {len(initial_message) if initial_message else 0}")
+        print(f"[DIAGNOSTIC] Initial Message Preview: {repr(initial_message[:100] if initial_message else initial_message)}")
+        
         assistant_msg = SessionMessage(
             session_id=session.id,
             role='assistant',
@@ -354,6 +359,14 @@ def start_session(engagement_id):
         )
         db.session.add(assistant_msg)
         db.session.commit()
+        
+        # DIAGNOSTIC CHECKPOINT 3B: After Persistence
+        persisted_msg = db.session.get(SessionMessage, assistant_msg.id)
+        print(f"[DIAGNOSTIC] Persisted Message ID: {persisted_msg.id}")
+        print(f"[DIAGNOSTIC] Persisted Role: {persisted_msg.role}")
+        print(f"[DIAGNOSTIC] Persisted Content Type: {type(persisted_msg.content)}")
+        print(f"[DIAGNOSTIC] Persisted Content Length: {len(persisted_msg.content) if persisted_msg.content else 0}")
+        print(f"[DIAGNOSTIC] Persisted Content Preview: {repr(persisted_msg.content[:100] if persisted_msg.content else persisted_msg.content)}")
         
     except AIServiceError as e:
         logging.error(f"Failed to generate initial message: {str(e)}")
@@ -436,6 +449,11 @@ def send_message(session_id):
             max_completion_tokens=800
         )
         
+        # DIAGNOSTIC CHECKPOINT 3A: Before Persistence
+        print(f"[DIAGNOSTIC] Response Type: {type(response)}")
+        print(f"[DIAGNOSTIC] Response Length: {len(response) if response else 0}")
+        print(f"[DIAGNOSTIC] Response Preview: {repr(response[:100] if response else response)}")
+        
         assistant_msg = SessionMessage(
             session_id=session_id,
             role='assistant',
@@ -443,6 +461,14 @@ def send_message(session_id):
         )
         db.session.add(assistant_msg)
         db.session.commit()
+        
+        # DIAGNOSTIC CHECKPOINT 3B: After Persistence
+        persisted_msg = db.session.get(SessionMessage, assistant_msg.id)
+        print(f"[DIAGNOSTIC] Persisted Message ID: {persisted_msg.id}")
+        print(f"[DIAGNOSTIC] Persisted Role: {persisted_msg.role}")
+        print(f"[DIAGNOSTIC] Persisted Content Type: {type(persisted_msg.content)}")
+        print(f"[DIAGNOSTIC] Persisted Content Length: {len(persisted_msg.content) if persisted_msg.content else 0}")
+        print(f"[DIAGNOSTIC] Persisted Content Preview: {repr(persisted_msg.content[:100] if persisted_msg.content else persisted_msg.content)}")
         
     except AIServiceError as e:
         logging.error(f"Failed to generate response: {str(e)}")
