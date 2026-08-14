@@ -23,9 +23,12 @@ Ensure the following files are in your repository:
 4. Configure the service:
    - **Name:** ai-coaching-platform (or your choice)
    - **Environment:** Python 3
+   - **Python Version:** 3.12 or higher (3.14 supported)
    - **Build Command:** `pip install -r requirements.txt`
    - **Start Command:** `gunicorn app:app`
    - **Instance Type:** Free (for testing) or paid tier
+
+**Note:** The application uses psycopg 3 for PostgreSQL connectivity, which is compatible with Python 3.14+
 
 ### Step 3: Add PostgreSQL Database
 

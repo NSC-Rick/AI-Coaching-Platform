@@ -28,8 +28,13 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-i
 
 database_url = os.environ.get('DATABASE_URL')
 if database_url:
+    # Normalize DATABASE_URL for SQLAlchemy compatibility
+    # Render/Heroku provide postgres://, but SQLAlchemy requires postgresql://
     if database_url.startswith('postgres://'):
         database_url = database_url.replace('postgres://', 'postgresql://', 1)
+    
+    # For psycopg 3, SQLAlchemy will use postgresql:// by default
+    # No need to explicitly specify postgresql+psycopg:// unless required
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 else:
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data/coaching.db'
