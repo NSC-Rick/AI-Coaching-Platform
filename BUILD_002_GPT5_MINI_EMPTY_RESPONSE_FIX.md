@@ -22,11 +22,11 @@ Production diagnostics confirmed:
 **Previous:** 500-800 tokens  
 **Updated:** 2000 tokens (coaching), 3000 tokens (extraction)
 
-### Added Reasoning Effort Parameter
+### Reasoning Effort Parameter
 
-**Added:** `reasoning_effort="low"`
+**Note:** Initially attempted to add `reasoning_effort="low"` but this parameter is not supported by OpenAI SDK 1.54.4. Removed in final implementation.
 
-This parameter tells GPT-5-mini to use minimal reasoning tokens, leaving more budget for actual response content.
+The increased token budget alone resolves the empty response issue.
 
 ### Added Empty Response Detection
 
@@ -52,8 +52,7 @@ def generate_coaching_response(
     response = self.client.chat.completions.create(
         model=self.model,
         messages=full_messages,
-        max_completion_tokens=max_completion_tokens,
-+       reasoning_effort="low"
+        max_completion_tokens=max_completion_tokens
     )
     
 +   # Log usage information
@@ -81,7 +80,6 @@ response = self.client.chat.completions.create(
         {"role": "user", "content": user_prompt}
     ],
 +   max_completion_tokens=3000,
-+   reasoning_effort="low",
     response_format={"type": "json_object"}
 )
 
@@ -159,9 +157,9 @@ Now uses default of 2000 tokens.
 
 ### Reasoning Effort
 
-**Added:** `reasoning_effort="low"`
+**Attempted but not supported:** `reasoning_effort="low"` is not a valid parameter in OpenAI SDK 1.54.4.
 
-GPT-5-mini uses reasoning tokens internally before generating output. Setting this to "low" minimizes reasoning token usage, leaving more budget for visible response content.
+The increased token budget alone is sufficient to resolve the empty response issue.
 
 ### Error Handling
 

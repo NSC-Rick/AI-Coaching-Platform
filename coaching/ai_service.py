@@ -47,8 +47,7 @@ class AIService:
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=full_messages,
-                max_completion_tokens=max_completion_tokens,
-                reasoning_effort="low"
+                max_completion_tokens=max_completion_tokens
             )
             
             # DIAGNOSTIC CHECKPOINT 1: Raw OpenAI Response
@@ -126,7 +125,6 @@ Based on this session and the current context, extract structured updates follow
                     {"role": "user", "content": user_prompt}
                 ],
                 max_completion_tokens=3000,
-                reasoning_effort="low",
                 response_format={"type": "json_object"}
             )
             
