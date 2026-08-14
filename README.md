@@ -110,6 +110,8 @@ OPENAI_MODEL=gpt-4-turbo-preview
 
 ### Database Initialization
 
+**Local Development:**
+
 Initialize the database:
 ```bash
 flask init-db
@@ -119,6 +121,10 @@ Seed test data:
 ```bash
 flask seed-data
 ```
+
+**Production Deployment (Render):**
+
+Database initialization happens automatically via `init_render.py` during the build process. See `DEPLOYMENT.md` for details.
 
 This creates test users with the following credentials:
 

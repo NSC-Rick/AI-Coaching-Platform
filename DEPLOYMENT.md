@@ -24,11 +24,16 @@ Ensure the following files are in your repository:
    - **Name:** ai-coaching-platform (or your choice)
    - **Environment:** Python 3
    - **Python Version:** 3.12 or higher (3.14 supported)
-   - **Build Command:** `pip install -r requirements.txt`
+   - **Build Command:** `pip install -r requirements.txt && python init_render.py`
    - **Start Command:** `gunicorn app:app`
    - **Instance Type:** Free (for testing) or paid tier
 
 **Note:** The application uses psycopg 3 for PostgreSQL connectivity, which is compatible with Python 3.14+
+
+**Important:** The build command includes `python init_render.py` which automatically:
+- Creates database tables
+- Seeds PoC test data (only if database is empty)
+- Is safe to run on every deployment
 
 ### Step 3: Add PostgreSQL Database
 
@@ -60,26 +65,41 @@ In your Render Web Service, go to "Environment" and add:
 
 1. Click "Manual Deploy" → "Deploy latest commit"
 2. Wait for the build to complete
-3. Check the logs for any errors
-
-### Step 6: Initialize Database
-
-After successful deployment:
-
-1. Open the Render Shell for your web service
-2. Run database initialization:
-   ```bash
-   flask init-db
+3. Check the build logs - you should see:
+   ```
+   RENDER DATABASE INITIALIZATION
+   ============================================================
+   Step 1: Creating database tables...
+   ✓ Database tables created/verified
+   
+   Step 2: Checking for existing data...
+   Database is empty - proceeding with seed data
+   
+   Step 3: Seeding PoC test data...
+   ✓ Created advisor: ronda@example.com
+   ✓ Created client A: sarah@example.com (Sarah's Hardware)
+   ✓ Created client B: michael@example.com (Chen's Bakery)
+   ✓ Seed data created successfully
+   
+   TEST USER CREDENTIALS
+   [credentials displayed]
+   
+   INITIALIZATION COMPLETE
    ```
 
-3. Seed test data:
-   ```bash
-   flask seed-data
-   ```
+**Note:** Database initialization happens automatically during build. No manual shell commands required!
 
-4. Note the test user credentials displayed
+**On Subsequent Deployments:**
+The initialization script detects existing data and skips seeding:
+```
+Step 2: Checking for existing data...
+Found 3 users in database
+✓ Database already contains data
+Skipping seed data to avoid duplicates
+INITIALIZATION COMPLETE (existing data preserved)
+```
 
-### Step 7: Verify Deployment
+### Step 6: Verify Deployment
 
 1. Visit your Render URL (e.g., https://ai-coaching-platform.onrender.com)
 2. You should see the login page
@@ -151,16 +171,37 @@ After successful deployment:
 
 ### Render-Specific Notes
 
+**Automatic Database Initialization:**
+
+Render Free tier does not provide shell access, so the application uses `init_render.py` for automatic initialization:
+
+- **First Deployment:** Creates tables and seeds PoC test data
+- **Subsequent Deployments:** Detects existing data and skips seeding
+- **Safe to Run Repeatedly:** No risk of duplicating data or dropping tables
+- **Runs During Build:** Happens before application starts
+
+**Local Development:**
+
+For local development, continue using Flask CLI commands:
+```bash
+flask init-db      # Create tables
+flask seed-data    # Seed test data
+```
+
+These commands are preserved and work identically to `init_render.py`.
+
 **Free Tier Limitations:**
 - Services spin down after 15 minutes of inactivity
 - First request after spin-down will be slow (30-60 seconds)
 - 750 hours/month free compute time
 - Database limited to 1GB
+- No shell access (use init_render.py for initialization)
 
 **Scaling:**
 - Upgrade to paid tier for always-on service
 - Increase database size as needed
 - Add custom domain if desired
+- Paid tiers include shell access
 
 ### Database Backup
 
@@ -186,10 +227,11 @@ pg_dump $DATABASE_URL > backup.sql
 - [ ] Code pushed to GitHub
 - [ ] Render web service created
 - [ ] PostgreSQL database created
-- [ ] Environment variables configured
+- [ ] Environment variables configured (SECRET_KEY, DATABASE_URL)
+- [ ] Build command set to: `pip install -r requirements.txt && python init_render.py`
 - [ ] Application deployed successfully
-- [ ] Database initialized (`flask init-db`)
-- [ ] Test data seeded (`flask seed-data`)
+- [ ] Build logs show successful database initialization
+- [ ] Test credentials displayed in build logs
 - [ ] Login page accessible
 - [ ] Client portal tested
 - [ ] Advisor portal tested
