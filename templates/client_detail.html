@@ -156,9 +156,12 @@
                 {% if coaching_observations %}
                 <ul class="observation-list">
                     {% for obs in coaching_observations %}
-                    <li class="observation-item importance-{{ obs.importance }}">
+                    <li class="observation-item importance-{{ obs.importance }} status-{{ obs.status }}">
                         {{ obs.observation }}
-                        <span class="observation-date">{{ obs.created_at.strftime('%Y-%m-%d') }}</span>
+                        <span class="observation-meta">
+                            <span class="badge status-{{ obs.status }}">{{ obs.status }}</span>
+                            <span class="observation-date">{{ obs.created_at.strftime('%Y-%m-%d') }}</span>
+                        </span>
                     </li>
                     {% endfor %}
                 </ul>

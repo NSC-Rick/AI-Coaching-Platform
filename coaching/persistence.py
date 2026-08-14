@@ -35,7 +35,9 @@ def apply_extraction_updates(engagement_id: int, extraction: Dict[str, Any]) -> 
         'events_created': 0,
         'learning_updated': 0,
         'observations_created': 0,
-        'attention_items_created': 0
+        'observations_updated': 0,
+        'attention_items_created': 0,
+        'attention_items_updated': 0
     }
     
     try:
@@ -73,10 +75,22 @@ def apply_extraction_updates(engagement_id: int, extraction: Dict[str, Any]) -> 
                 extraction['learning_updates']
             )
         
+        if extraction.get('observation_updates'):
+            changes['observations_updated'] = _update_observations(
+                engagement_id,
+                extraction['observation_updates']
+            )
+        
         if extraction.get('new_observations'):
             changes['observations_created'] = _create_observations(
                 engagement_id,
                 extraction['new_observations']
+            )
+        
+        if extraction.get('attention_item_updates'):
+            changes['attention_items_updated'] = _update_attention_items(
+                engagement_id,
+                extraction['attention_item_updates']
             )
         
         if extraction.get('advisor_attention_items'):
@@ -125,6 +139,9 @@ def _update_commitments(updates: List[Dict]) -> int:
                 commitment.status = u['status']
                 if u['status'] == 'completed' and not commitment.completed_at:
                     commitment.completed_at = datetime.utcnow()
+            if 'due_date' in u and u['due_date']:
+                commitment.due_date = datetime.strptime(u['due_date'], '%Y-%m-%d').date()
+                logger.info(f"[RECONCILIATION] Commitment {u['id']} due_date updated to {u['due_date']}")
             count += 1
     
     return count
@@ -241,5 +258,37 @@ def _create_attention_items(engagement_id: int, items: List[Dict]) -> int:
         )
         db.session.add(attention)
         count += 1
+    
+    return count
+
+
+def _update_observations(engagement_id: int, updates: List[Dict]) -> int:
+    """Update existing coaching observations."""
+    count = 0
+    for u in updates:
+        observation = db.session.get(CoachingObservation, u['id'])
+        if observation and observation.engagement_id == engagement_id:
+            if 'status' in u:
+                observation.status = u['status']
+                logger.info(f"[RECONCILIATION] Observation {u['id']} -> {u['status']}")
+            count += 1
+        elif observation:
+            logger.warning(f"[RECONCILIATION] Observation {u['id']} belongs to different engagement, skipping")
+    
+    return count
+
+
+def _update_attention_items(engagement_id: int, updates: List[Dict]) -> int:
+    """Update existing advisor attention items."""
+    count = 0
+    for u in updates:
+        attention = db.session.get(AdvisorAttention, u['id'])
+        if attention and attention.engagement_id == engagement_id:
+            if 'status' in u:
+                attention.status = u['status']
+                logger.info(f"[RECONCILIATION] Attention item {u['id']} -> {u['status']}")
+            count += 1
+        elif attention:
+            logger.warning(f"[RECONCILIATION] Attention item {u['id']} belongs to different engagement, skipping")
     
     return count

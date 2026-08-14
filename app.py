@@ -251,17 +251,35 @@ def client_detail(engagement_id):
         engagement_id=engagement.id
     ).order_by(LearningRecord.recommended_at.desc()).all()
     
-    coaching_observations = CoachingObservation.query.filter_by(
-        engagement_id=engagement.id
+    # Get active observations first, then historical
+    active_observations = CoachingObservation.query.filter_by(
+        engagement_id=engagement.id,
+        status='active'
     ).order_by(CoachingObservation.created_at.desc()).all()
+    
+    historical_observations = CoachingObservation.query.filter(
+        CoachingObservation.engagement_id == engagement.id,
+        CoachingObservation.status.in_(['resolved', 'superseded'])
+    ).order_by(CoachingObservation.created_at.desc()).limit(5).all()
+    
+    coaching_observations = active_observations + historical_observations
     
     advisor_guidance = AdvisorGuidance.query.filter_by(
         engagement_id=engagement.id
     ).order_by(AdvisorGuidance.created_at.desc()).all()
     
-    attention_items = AdvisorAttention.query.filter_by(
-        engagement_id=engagement.id
+    # Get open attention items first, then resolved
+    open_attention_items = AdvisorAttention.query.filter_by(
+        engagement_id=engagement.id,
+        status='open'
     ).order_by(AdvisorAttention.created_at.desc()).all()
+    
+    resolved_attention_items = AdvisorAttention.query.filter_by(
+        engagement_id=engagement.id,
+        status='resolved'
+    ).order_by(AdvisorAttention.created_at.desc()).limit(5).all()
+    
+    attention_items = open_attention_items + resolved_attention_items
     
     sessions = Session.query.filter_by(
         engagement_id=engagement.id

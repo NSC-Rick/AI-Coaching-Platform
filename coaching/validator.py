@@ -21,6 +21,8 @@ class ExtractionValidator:
     VALID_RISK_STATUSES = ['open', 'resolved', 'mitigated']
     VALID_LEARNING_STATUSES = ['recommended', 'in_progress', 'completed']
     VALID_OBSERVATION_IMPORTANCE = ['high', 'normal', 'low']
+    VALID_OBSERVATION_STATUSES = ['active', 'resolved', 'superseded']
+    VALID_ATTENTION_STATUSES = ['open', 'resolved']
     VALID_PRIORITIES = ['high', 'normal', 'low']
     VALID_ESCALATION_LEVELS = [0, 1, 2, 3]
     VALID_SOURCES = ['client', 'advisor', 'ai_extraction', 'system']
@@ -76,8 +78,14 @@ class ExtractionValidator:
         if 'new_observations' in extraction:
             self._validate_new_observations(extraction['new_observations'])
         
+        if 'observation_updates' in extraction:
+            self._validate_observation_updates(extraction['observation_updates'])
+        
         if 'advisor_attention_items' in extraction:
             self._validate_advisor_attention(extraction['advisor_attention_items'])
+        
+        if 'attention_item_updates' in extraction:
+            self._validate_attention_item_updates(extraction['attention_item_updates'])
         
         if 'potential_escalation' in extraction:
             self._validate_escalation(extraction['potential_escalation'])
@@ -292,3 +300,49 @@ class ExtractionValidator:
         if 'level' in escalation:
             if escalation['level'] not in self.VALID_ESCALATION_LEVELS:
                 self.errors.append(f"potential_escalation.level invalid: {escalation['level']}")
+    
+    def _validate_observation_updates(self, updates: Any):
+        """Validate observation update proposals."""
+        if not isinstance(updates, list):
+            self.errors.append("observation_updates must be a list")
+            return
+        
+        existing_ids = [o['id'] for o in self.existing_context.get('coaching_observations', [])]
+        
+        for i, update in enumerate(updates):
+            if not isinstance(update, dict):
+                self.errors.append(f"observation_updates[{i}] must be a dictionary")
+                continue
+            
+            if 'id' not in update:
+                self.errors.append(f"observation_updates[{i}] missing required field: id")
+            elif update['id'] not in existing_ids:
+                self.errors.append(f"observation_updates[{i}].id references non-existent observation")
+            
+            if 'status' in update:
+                if update['status'] not in self.VALID_OBSERVATION_STATUSES:
+                    self.errors.append(f"observation_updates[{i}].status invalid: {update['status']}")
+    
+    def _validate_attention_item_updates(self, updates: Any):
+        """Validate attention item update proposals."""
+        if not isinstance(updates, list):
+            self.errors.append("attention_item_updates must be a list")
+            return
+        
+        # Get existing attention items from context - need to query database for IDs
+        # Since context doesn't include attention items, we'll validate IDs during persistence
+        # For now, just validate structure
+        
+        for i, update in enumerate(updates):
+            if not isinstance(update, dict):
+                self.errors.append(f"attention_item_updates[{i}] must be a dictionary")
+                continue
+            
+            if 'id' not in update:
+                self.errors.append(f"attention_item_updates[{i}] missing required field: id")
+            elif not isinstance(update['id'], int):
+                self.errors.append(f"attention_item_updates[{i}].id must be an integer")
+            
+            if 'status' in update:
+                if update['status'] not in self.VALID_ATTENTION_STATUSES:
+                    self.errors.append(f"attention_item_updates[{i}].status invalid: {update['status']}")

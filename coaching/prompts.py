@@ -259,7 +259,8 @@ You must return ONLY valid JSON following this exact schema:
   "commitment_updates": [
     {
       "id": existing_commitment_id,
-      "status": "completed|deferred|cancelled",
+      "status": "completed|deferred|cancelled|open",
+      "due_date": "YYYY-MM-DD or null (can add/update due date)",
       "completed_at": "YYYY-MM-DD or null"
     }
   ],
@@ -308,12 +309,28 @@ You must return ONLY valid JSON following this exact schema:
     }
   ],
   
+  "observation_updates": [
+    {
+      "id": existing_observation_id,
+      "status": "resolved|superseded",
+      "reason": "Why this observation is no longer current"
+    }
+  ],
+  
   "advisor_attention_items": [
     {
       "title": "Attention item title",
       "description": "Why this needs advisor attention",
       "priority": "high|normal",
       "source": "ai_extraction"
+    }
+  ],
+  
+  "attention_item_updates": [
+    {
+      "id": existing_attention_item_id,
+      "status": "resolved",
+      "reason": "Why this attention item is now resolved"
     }
   ],
   
@@ -326,11 +343,22 @@ You must return ONLY valid JSON following this exact schema:
 
 CRITICAL RULES:
 
-1. COMMITMENTS:
+1. COMMITMENTS - SEMANTIC MATCHING:
    - Only extract explicit client commitments, not vague intentions
    - "I should probably..." is NOT a commitment
    - "Yes, I'll do that by Friday" IS a commitment
    - When client reports completing an existing commitment, use commitment_updates with status="completed"
+   - BEFORE creating new_commitments, check if an OPEN commitment represents the SAME ACTION
+   - Match semantically by ACTION and OBJECT, not exact wording
+   - Examples of DUPLICATE (use updates, not new):
+     * Existing: "Contact five inactive customers"
+     * Client: "I'll contact all five customers by tomorrow" → UPDATE with due date, don't create new
+     * Existing: "Call lender"
+     * Client: "I'll call the lender tomorrow" → UPDATE with due date, don't create new
+   - Examples of DIFFERENT (create new):
+     * "Contact five inactive customers" vs "Record customer responses in cash tracker" → DIFFERENT actions
+     * "Call lender" vs "Send lender written confirmation" → DIFFERENT actions
+   - When updating existing commitment, you can add/update due_date if client provides timing
 
 2. RISKS:
    - Only extract material risks, not every concern
@@ -345,13 +373,33 @@ CRITICAL RULES:
    - Only recommend resources that exist in the approved list
    - Never invent resource IDs
 
-5. OBSERVATIONS:
+5. OBSERVATIONS - LIFECYCLE:
    - Patterns worth noting for future coaching
    - Not a summary of the conversation
+   - BEFORE creating new observations, check if new evidence CONTRADICTS or RESOLVES existing ACTIVE observations
+   - If an observation is no longer current, use observation_updates to mark it "resolved" or "superseded"
+   - Examples:
+     * Existing ACTIVE: "Client avoiding lender contact"
+     * Evidence: Client contacted lender and received confirmation
+     * Action: Use observation_updates to mark old observation as "resolved"
+     * Then optionally create NEW observation: "Client completed lender outreach and secured written confirmation"
+   - Do NOT create observations that contradict active observations without resolving the old ones
+   - Historical observations remain in database but are marked resolved/superseded
 
-6. ADVISOR ATTENTION:
+6. ADVISOR ATTENTION - LIFECYCLE:
    - Material issues requiring human review
    - Examples: repeated missed critical commitments, major customer loss, proposed new debt, expansion proposals
+   - BEFORE creating new attention items, check if new evidence RESOLVES existing OPEN attention items
+   - If an attention item's underlying issue is resolved, use attention_item_updates to mark it "resolved"
+   - Examples:
+     * Existing OPEN: "Lender contact repeatedly deferred"
+     * Evidence: Client contacted lender
+     * Action: Use attention_item_updates to mark as "resolved"
+     * Existing OPEN: "Immediate payroll coverage decision required"
+     * Evidence: Cash tracker updated, payroll covered after lender deferral
+     * Action: Use attention_item_updates to mark as "resolved"
+   - Do NOT create duplicate attention items for issues that are now resolved
+   - Historical attention items remain in database but are marked resolved
 
 7. ESCALATION LEVELS:
    - Level 0: Coach normally (no escalation)
@@ -381,18 +429,22 @@ CRITICAL RULES:
         "Lender contact delayed" → mark that risk resolved
       - If a risk's underlying condition has changed, update it
    
-   c) OBSERVATIONS - AVOID CONTRADICTIONS:
-      - Do NOT create new observations that directly contradict active observations
-      - If new evidence shows a pattern has changed, the commitment/risk updates show the change
-      - Example: Don't add "Client proactively contacted lender" if there's already
-        "Client avoiding lender contact" - the commitment completion shows the change
-      - Only create observations about NEW patterns, not reversals of old patterns
+   c) OBSERVATIONS - RESOLVE CONTRADICTIONS:
+      - If new evidence contradicts an ACTIVE observation, use observation_updates to mark it "resolved" or "superseded"
+      - Example: Existing observation "Client avoiding lender contact" + Evidence "Client contacted lender"
+        → Use observation_updates with id and status="resolved"
+      - Then optionally create NEW observation about the current pattern
+      - Do NOT leave contradictory observations both marked as "active"
+      - Historical observations are preserved but marked resolved/superseded
    
-   d) ADVISOR ATTENTION - AVOID DUPLICATES:
-      - Do NOT create new attention items for issues that are now resolved
-      - If an attention item's underlying issue is addressed, don't flag it again
-      - Example: Don't create "Lender contact overdue" if client just reported contacting lender
-      - Only flag NEW issues that need advisor attention
+   d) ADVISOR ATTENTION - RESOLVE WHEN ADDRESSED:
+      - If new evidence resolves an OPEN attention item, use attention_item_updates to mark it "resolved"
+      - Example: Existing attention "Lender contact repeatedly deferred" + Evidence "Client contacted lender"
+        → Use attention_item_updates with id and status="resolved"
+      - Example: Existing attention "Immediate payroll decision required" + Evidence "Payroll covered"
+        → Use attention_item_updates with id and status="resolved"
+      - Do NOT create duplicate attention items for resolved issues
+      - Historical attention items are preserved but marked resolved
 
 10. MATCHING EXISTING RECORDS:
     - Read the CURRENT COACHING RECORD CONTEXT carefully
