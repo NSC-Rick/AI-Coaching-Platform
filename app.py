@@ -510,7 +510,7 @@ def process_session_extraction(session_id):
     
     engagement = session.engagement
     
-    logging.info(f"Processing extraction for session {session_id}, engagement {engagement.id}")
+    logging.info(f"[EXTRACTION] Processing session {session_id}, engagement {engagement.id}")
     
     context = build_coaching_context(engagement.id)
     pathway_data = load_pathway(engagement.pathway_id)
@@ -520,8 +520,12 @@ def process_session_extraction(session_id):
         for msg in session.messages
     ]
     
+    logging.info(f"[EXTRACTION] Session has {len(messages)} messages")
+    logging.info(f"[EXTRACTION] Open commitments: {len(context.get('open_commitments', []))}")
+    logging.info(f"[EXTRACTION] Current risks: {len(context.get('current_risks', []))}")
+    
     if len(messages) < 2:
-        logging.info("Session too short for extraction")
+        logging.info("[EXTRACTION] Session too short for extraction")
         session.summary = "Brief session - no significant updates"
         db.session.commit()
         return
@@ -530,29 +534,42 @@ def process_session_extraction(session_id):
         ai_service = AIService()
         extraction_prompt = build_extraction_prompt()
         
+        logging.info("[EXTRACTION] Calling AI service for extraction")
+        
         extraction = ai_service.extract_session_outcomes(
             messages=messages,
             context=context,
             extraction_prompt=extraction_prompt
         )
         
-        logging.info(f"Extraction result: {extraction}")
+        logging.info(f"[EXTRACTION] Extraction result keys: {list(extraction.keys())}")
+        logging.info(f"[EXTRACTION] Session summary: {extraction.get('session_summary', 'MISSING')[:100]}")
+        logging.info(f"[EXTRACTION] New commitments: {len(extraction.get('new_commitments', []))}")
+        logging.info(f"[EXTRACTION] Commitment updates: {len(extraction.get('commitment_updates', []))}")
+        logging.info(f"[EXTRACTION] New risks: {len(extraction.get('new_risks', []))}")
+        logging.info(f"[EXTRACTION] Risk updates: {len(extraction.get('risk_updates', []))}")
+        logging.info(f"[EXTRACTION] New observations: {len(extraction.get('new_observations', []))}")
+        logging.info(f"[EXTRACTION] Advisor attention items: {len(extraction.get('advisor_attention_items', []))}")
         
         validator = ExtractionValidator(engagement.id, pathway_data, context)
         is_valid, errors = validator.validate_extraction(extraction)
         
         if not is_valid:
-            logging.error(f"Validation failed: {errors}")
+            logging.error(f"[EXTRACTION] Validation failed: {errors}")
             session.summary = "Session completed - validation errors prevented some updates"
             db.session.commit()
             return
         
+        logging.info("[EXTRACTION] Validation passed, applying updates")
+        
         changes = apply_extraction_updates(engagement.id, extraction)
         
-        session.summary = extraction.get('session_summary', 'Session completed')
+        session_summary = extraction.get('session_summary', 'Session completed')
+        session.summary = session_summary
         db.session.commit()
         
-        logging.info(f"Session extraction complete. Changes: {changes}")
+        logging.info(f"[EXTRACTION] Session extraction complete. Changes: {changes}")
+        logging.info(f"[EXTRACTION] Session summary persisted: {session_summary[:100]}")
         
     except AIServiceError as e:
         logging.error(f"AI service error during extraction: {str(e)}")

@@ -341,4 +341,42 @@ CRITICAL RULES:
    - Use new when creating new records
    - Check the context for existing records before creating duplicates
 
+9. RECONCILIATION - CRITICAL:
+   When client provides new evidence that contradicts or supersedes existing Coaching Record state:
+   
+   a) COMMITMENT COMPLETION:
+      - If client reports completing an action that matches an open commitment,
+        use commitment_updates with the commitment ID and status="completed"
+      - Example: Client says "I called the lender yesterday" and there's an open
+        commitment "Contact lender about payment deferral" → mark that commitment completed
+      - Match based on the ACTION, not exact wording
+   
+   b) RISK RESOLUTION:
+      - If client reports an event that resolves an existing risk,
+        use risk_updates with the risk ID and status="resolved"
+      - Example: Client says "Lender agreed to defer payment" and there's an open risk
+        "Lender contact delayed" → mark that risk resolved
+      - If a risk's underlying condition has changed, update it
+   
+   c) OBSERVATIONS - AVOID CONTRADICTIONS:
+      - Do NOT create new observations that directly contradict active observations
+      - If new evidence shows a pattern has changed, the commitment/risk updates show the change
+      - Example: Don't add "Client proactively contacted lender" if there's already
+        "Client avoiding lender contact" - the commitment completion shows the change
+      - Only create observations about NEW patterns, not reversals of old patterns
+   
+   d) ADVISOR ATTENTION - AVOID DUPLICATES:
+      - Do NOT create new attention items for issues that are now resolved
+      - If an attention item's underlying issue is addressed, don't flag it again
+      - Example: Don't create "Lender contact overdue" if client just reported contacting lender
+      - Only flag NEW issues that need advisor attention
+
+10. MATCHING EXISTING RECORDS:
+    - Read the CURRENT COACHING RECORD CONTEXT carefully
+    - Match client statements to existing commitments by ACTION, not exact words
+    - "I called them" matches "Contact lender"
+    - "I finished that" matches the most recent discussed commitment
+    - "That's done now" matches commitments discussed in this session
+    - When in doubt about which commitment was completed, use the most recent or most relevant one
+
 Return ONLY the JSON object. No additional text or explanation."""
