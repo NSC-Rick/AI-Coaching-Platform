@@ -1097,16 +1097,26 @@ def seed_data():
     print('=' * 50)
 
 # Process any pending sessions on startup (recovery mechanism)
-@app.before_first_request
+# Flask 3.x compatible: Call directly after app initialization
 def process_pending_sessions_on_startup():
     """Process any sessions left in pending state from previous runs."""
     from background_processor import process_pending_sessions_once
     try:
-        count = process_pending_sessions_once(app)
-        if count > 0:
-            logging.info(f"[STARTUP] Triggered processing for {count} pending sessions")
+        with app.app_context():
+            count = process_pending_sessions_once(app)
+            if count > 0:
+                logging.info(f"[STARTUP] Triggered processing for {count} pending sessions")
     except Exception as e:
         logging.error(f"[STARTUP] Error processing pending sessions: {str(e)}")
+
+# Call startup recovery when running under Gunicorn or other WSGI servers
+# This executes during module import, which happens once per worker
+if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
+    # Not in Flask development reloader child process
+    try:
+        process_pending_sessions_on_startup()
+    except Exception as e:
+        logging.error(f"[STARTUP] Failed to process pending sessions: {str(e)}")
 
 if __name__ == '__main__':
     app.run(debug=True)
