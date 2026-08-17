@@ -6,7 +6,7 @@ from flask_login import LoginManager, login_user, logout_user, login_required, c
 from dotenv import load_dotenv
 from models import db, User, Advisor, Client, Business, Engagement, PathwayState, Commitment, Risk, SignificantEvent, LearningRecord, CoachingObservation, Session, AdvisorGuidance, AdvisorAttention, SessionMessage
 from coaching.ai_service import AIService, AIServiceError
-from coaching.context import build_coaching_context
+from coaching.context import build_coaching_context, format_context_for_display
 from coaching.engine import load_pathway
 from coaching.prompts import build_coaching_system_prompt, build_extraction_prompt
 from coaching.validator import ExtractionValidator, ValidationError
