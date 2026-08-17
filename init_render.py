@@ -225,6 +225,8 @@ def init_render_database():
                 started_at=datetime.utcnow() - timedelta(days=3),
                 ended_at=datetime.utcnow() - timedelta(days=3, hours=-1),
                 interaction_type='voice',
+                status='completed',
+                processing_status='complete',
                 summary='Client reported Johnson account loss and agreed to update cash forecast'
             )
             db.session.add(session_a1)
