@@ -89,7 +89,7 @@ def categorize_commitments(commitments):
                 categorized['active'].append(commitment)
         
         elif commitment.status == 'completed':
-            if commitment.updated_at and commitment.updated_at >= week_ago:
+            if commitment.completed_at and commitment.completed_at >= week_ago:
                 categorized['completed_recent'].append(commitment)
             else:
                 categorized['historical'].append(commitment)

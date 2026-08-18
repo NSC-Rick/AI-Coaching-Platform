@@ -75,64 +75,141 @@
         
         <div class="card status-card">
             <h3>Current Status</h3>
-            <div class="status-metrics">
-                <div class="metric">
-                    <span class="metric-value">{{ categorized_commitments.active|length + categorized_commitments.next_actions|length }}</span>
-                    <span class="metric-label">Active Commitments</span>
+            <div class="status-rows">
+                <div class="status-row">
+                    <span class="status-label">Active Commitments</span>
+                    <span class="status-value">{{ categorized_commitments.active|length + categorized_commitments.next_actions|length }}</span>
                 </div>
-                <div class="metric">
-                    <span class="metric-value">{{ categorized_risks.active|length + categorized_risks.watch|length }}</span>
-                    <span class="metric-label">Open Risks</span>
+                <div class="status-row">
+                    <span class="status-label">Open Risks</span>
+                    <span class="status-value">{{ categorized_risks.active|length + categorized_risks.watch|length }}</span>
                 </div>
                 {% if pathway_state %}
-                <div class="metric">
-                    <span class="metric-value">Day {{ pathway_state.current_day }}</span>
-                    <span class="metric-label">{{ pathway_data.manifest.name }}</span>
+                <div class="status-row">
+                    <span class="status-label">Pathway Stage</span>
+                    <span class="status-value">Day {{ pathway_state.current_day }}</span>
+                </div>
+                <div class="status-row">
+                    <span class="status-label">Pathway</span>
+                    <span class="status-value">
+                        {% for stage in pathway_data.manifest.stages %}
+                            {% if stage.stage_id == pathway_state.current_stage_id %}
+                                {{ stage.name }}
+                            {% endif %}
+                        {% endfor %}
+                    </span>
                 </div>
                 {% endif %}
                 {% if last_session %}
-                <div class="metric">
-                    <span class="metric-value">{{ last_session.started_at.strftime('%b %d') }}</span>
-                    <span class="metric-label">Last Interaction</span>
+                <div class="status-row">
+                    <span class="status-label">Last Client Interaction</span>
+                    <span class="status-value">{{ last_session.started_at.strftime('%b %d, %Y') }}</span>
+                </div>
+                {% endif %}
+                {% if last_advisor_guidance %}
+                <div class="status-row">
+                    <span class="status-label">Last Advisor Interaction</span>
+                    <span class="status-value">{{ last_advisor_guidance.created_at.strftime('%b %d, %Y') }}</span>
+                </div>
+                {% else %}
+                <div class="status-row">
+                    <span class="status-label">Last Advisor Interaction</span>
+                    <span class="status-value status-none">No advisor activity</span>
                 </div>
                 {% endif %}
             </div>
         </div>
     </div>
 
-    <!-- ACTIVE WORK -->
-    <div class="card active-work-card">
-        <h3>Active Work</h3>
-        {% if categorized_commitments.next_actions or categorized_commitments.active %}
-        <table class="work-table">
-            <thead>
-                <tr>
-                    <th>Commitment / Action</th>
-                    <th>Status</th>
-                    <th>Target</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for commitment in categorized_commitments.next_actions %}
-                <tr class="next-action">
-                    <td><strong>{{ commitment.description }}</strong></td>
-                    <td><span class="badge priority-high">Next Action</span></td>
-                    <td>{{ commitment.due_date.strftime('%b %d') if commitment.due_date else 'No date' }}</td>
-                </tr>
-                {% endfor %}
-                {% for commitment in categorized_commitments.active[:5] %}
-                <tr>
-                    <td>{{ commitment.description }}</td>
-                    <td><span class="badge status-{{ commitment.status }}">{{ commitment.status|title }}</span></td>
-                    <td>{{ commitment.due_date.strftime('%b %d') if commitment.due_date else 'No date' }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-        <p class="no-data">No active commitments.</p>
-        {% endif %}
+    <!-- ACTIVE WORK / COMPLETED WORK -->
+    <div class="card work-card">
+        <div class="work-tabs">
+            <button class="work-tab active" data-tab="active">
+                Active Work
+                <span class="tab-count">{{ categorized_commitments.next_actions|length + categorized_commitments.active|length }}</span>
+            </button>
+            <button class="work-tab" data-tab="completed">
+                Completed Work
+                <span class="tab-count">{{ categorized_commitments.completed_recent|length }}</span>
+            </button>
+        </div>
+        
+        <!-- Active Work Tab Content -->
+        <div class="work-tab-content active" id="active-work">
+            {% if categorized_commitments.next_actions or categorized_commitments.active %}
+            <table class="work-table">
+                <thead>
+                    <tr>
+                        <th>Commitment / Action</th>
+                        <th>Status</th>
+                        <th>Target</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for commitment in categorized_commitments.next_actions %}
+                    <tr class="priority-high">
+                        <td><strong>{{ commitment.description }}</strong></td>
+                        <td><span class="badge status-open">Open</span></td>
+                        <td>{{ commitment.due_date.strftime('%b %d') if commitment.due_date else 'No date' }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% for commitment in categorized_commitments.active %}
+                    <tr>
+                        <td>{{ commitment.description }}</td>
+                        <td><span class="badge status-open">Open</span></td>
+                        <td>{{ commitment.due_date.strftime('%b %d') if commitment.due_date else 'No date' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="no-data">No active commitments.</p>
+            {% endif %}
+        </div>
+        
+        <!-- Completed Work Tab Content -->
+        <div class="work-tab-content" id="completed-work">
+            {% if categorized_commitments.completed_recent %}
+            <table class="work-table">
+                <thead>
+                    <tr>
+                        <th>Completed Commitment / Action</th>
+                        <th>Completed On</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for commitment in categorized_commitments.completed_recent %}
+                    <tr class="completed">
+                        <td>✓ {{ commitment.description }}</td>
+                        <td>{{ commitment.completed_at.strftime('%b %d, %Y') if commitment.completed_at else 'Date unknown' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="no-data">No completed work yet.</p>
+            {% endif %}
+        </div>
     </div>
+    
+    <script>
+    // Simple tab switching
+    document.querySelectorAll('.work-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            const targetTab = this.dataset.tab;
+            
+            // Update tab buttons
+            document.querySelectorAll('.work-tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Update tab content
+            document.querySelectorAll('.work-tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(targetTab + '-work').classList.add('active');
+        });
+    });
+    </script>
 
     <!-- RECENT DEVELOPMENTS -->
     <div class="card developments-card">

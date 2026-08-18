@@ -289,8 +289,11 @@ def client_detail(engagement_id):
     recent_developments = build_recent_developments_timeline(sessions, coaching_observations, significant_events)
     advisor_attention_status = determine_advisor_attention_status(attention_items, risks, commitments)
     
-    # Get most recent session for last activity
+    # Get most recent session for last client activity
     last_session = sessions[0] if sessions else None
+    
+    # Get most recent advisor guidance for last advisor activity
+    last_advisor_guidance = advisor_guidance[0] if advisor_guidance else None
     
     return render_template('client_detail.html',
                          engagement=engagement,
@@ -312,7 +315,8 @@ def client_detail(engagement_id):
                          categorized_risks=categorized_risks,
                          recent_developments=recent_developments,
                          advisor_attention_status=advisor_attention_status,
-                         last_session=last_session)
+                         last_session=last_session,
+                         last_advisor_guidance=last_advisor_guidance)
 
 @app.route('/advisor/client/<int:engagement_id>/add_guidance', methods=['POST'])
 @require_role('ADVISOR')
