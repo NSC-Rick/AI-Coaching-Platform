@@ -3,99 +3,360 @@
 {% block title %}My Coaching - AI Coaching Platform{% endblock %}
 
 {% block content %}
-<div class="client-portal">
-    <div class="welcome-section">
-        <h2>Welcome, {{ client.first_name }}</h2>
-        {% if business %}
-        <p class="business-name">{{ business.business_name }}</p>
-        {% endif %}
-    </div>
+<style>
+/* Client Home Layout */
+.client-home {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
 
-    {% if not engagement %}
-    <div class="card">
-        <p>No active coaching engagement at this time.</p>
-    </div>
-    {% else %}
+.main-column {
+    min-width: 0;
+}
+
+.sidebar {
+    min-width: 0;
+}
+
+/* Welcome Section */
+.welcome-header {
+    margin-bottom: 2rem;
+}
+
+.welcome-header h1 {
+    font-size: 2rem;
+    margin: 0 0 0.25rem 0;
+    color: #333;
+}
+
+.business-name {
+    color: #666;
+    font-size: 1.125rem;
+    margin: 0;
+}
+
+/* Pathway Info */
+.pathway-info {
+    background: #f8f9fa;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+
+.pathway-name {
+    font-weight: 600;
+    font-size: 1.125rem;
+    color: #333;
+    margin: 0 0 0.25rem 0;
+}
+
+.pathway-stage {
+    color: #666;
+    margin: 0 0 0.25rem 0;
+}
+
+.pathway-day {
+    color: #666;
+    font-size: 0.9375rem;
+    margin: 0;
+}
+
+/* Current Focus */
+.focus-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.focus-card h2 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #666;
+    margin: 0 0 0.75rem 0;
+}
+
+.focus-content {
+    font-size: 1.125rem;
+    line-height: 1.6;
+    color: #333;
+}
+
+/* Next Step */
+.next-step-card {
+    background: #f0f7ff;
+    border: 2px solid #007bff;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.next-step-card h2 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #007bff;
+    margin: 0 0 0.75rem 0;
+}
+
+.next-step-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.next-step-description {
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 0.75rem;
+}
+
+.next-step-due {
+    color: #666;
+    font-size: 0.9375rem;
+}
+
+/* Coach Access */
+.coach-access {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.coach-access p {
+    color: #666;
+    margin: 0 0 1rem 0;
+}
+
+.coach-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* My Work Tabs */
+.work-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.work-tabs {
+    display: flex;
+    border-bottom: 2px solid #e0e0e0;
+    margin-bottom: 1.5rem;
+    gap: 0;
+}
+
+.work-tab {
+    background: none;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    color: #666;
+    font-weight: 500;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+.work-tab:hover {
+    color: #333;
+    background-color: #f5f5f5;
+}
+
+.work-tab.active {
+    color: #007bff;
+    border-bottom-color: #007bff;
+    font-weight: 600;
+}
+
+.tab-count {
+    display: inline-block;
+    margin-left: 0.5rem;
+    padding: 0.125rem 0.5rem;
+    background: #e9ecef;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.work-tab.active .tab-count {
+    background: #007bff;
+    color: white;
+}
+
+.work-tab-content {
+    display: none;
+}
+
+.work-tab-content.active {
+    display: block;
+}
+
+.work-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.work-table th {
+    text-align: left;
+    padding: 0.75rem;
+    border-bottom: 2px solid #e0e0e0;
+    font-weight: 600;
+    color: #666;
+    font-size: 0.875rem;
+}
+
+.work-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.work-table tr:last-child td {
+    border-bottom: none;
+}
+
+.no-data {
+    color: #999;
+    text-align: center;
+    padding: 2rem;
+    font-style: italic;
+}
+
+/* Sidebar */
+.sidebar-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+.sidebar-card h3 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #666;
+    margin: 0 0 1rem 0;
+}
+
+.resource-item {
+    padding: 1rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.resource-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.resource-item:first-child {
+    padding-top: 0;
+}
+
+.resource-title {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.25rem;
+}
+
+.resource-meta {
+    font-size: 0.875rem;
+    color: #666;
+    margin-bottom: 0.5rem;
+}
+
+.resource-description {
+    font-size: 0.9375rem;
+    color: #555;
+    line-height: 1.5;
+    margin-bottom: 0.75rem;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .client-home {
+        grid-template-columns: 1fr;
+        padding: 1rem;
+    }
     
-    <div class="pathway-status">
+    .sidebar {
+        order: 10;
+    }
+}
+</style>
+
+<div class="client-home">
+    <div class="main-column">
+        <!-- WELCOME -->
+        <div class="welcome-header">
+            <h1>Welcome, {{ client.first_name }}</h1>
+            {% if business %}
+            <p class="business-name">{{ business.business_name }}</p>
+            {% endif %}
+        </div>
+
+        {% if not engagement %}
         <div class="card">
-            <h3>{{ pathway_data.manifest.name }}</h3>
+            <p>No active coaching engagement at this time.</p>
+        </div>
+        {% else %}
+        
+        <!-- PATHWAY INFO -->
+        <div class="pathway-info">
+            <p class="pathway-name">{{ pathway_data.manifest.name }}</p>
             {% if pathway_state %}
-            <div class="status-grid">
-                <div class="status-item">
-                    <span class="label">Current Stage</span>
-                    <span class="value">{{ pathway_state.current_stage_id }}: 
-                        {% for stage in pathway_data.manifest.stages %}
-                            {% if stage.stage_id == pathway_state.current_stage_id %}
-                                {{ stage.name }}
-                            {% endif %}
-                        {% endfor %}
-                    </span>
-                </div>
-                <div class="status-item">
-                    <span class="label">Day</span>
-                    <span class="value">{{ pathway_state.current_day }} of 90</span>
-                </div>
-            </div>
-            {% if pathway_state.current_focus %}
-            <div class="focus-section">
-                <h4>Current Focus</h4>
-                <p>{{ pathway_state.current_focus }}</p>
-            </div>
-            {% endif %}
-            {% if pathway_state.current_priority_summary %}
-            <div class="priorities-section">
-                <h4>Current Priorities</h4>
-                <p>{{ pathway_state.current_priority_summary }}</p>
-            </div>
-            {% endif %}
-            {% endif %}
-        </div>
-    </div>
-
-    {% if open_commitments %}
-    <div class="commitments-section">
-        <div class="card">
-            <h3>My Commitments</h3>
-            <ul class="commitment-list">
-                {% for commitment in open_commitments %}
-                <li class="commitment-item {% if commitment.priority == 'high' %}priority-high{% endif %}">
-                    <span class="commitment-text">{{ commitment.description }}</span>
-                    {% if commitment.due_date %}
-                    <span class="commitment-due">Due: {{ commitment.due_date.strftime('%b %d') }}</span>
+            <p class="pathway-stage">{{ pathway_state.current_stage_id }}: 
+                {% for stage in pathway_data.manifest.stages %}
+                    {% if stage.stage_id == pathway_state.current_stage_id %}
+                        {{ stage.name }}
                     {% endif %}
-                </li>
                 {% endfor %}
-            </ul>
+            </p>
+            <p class="pathway-day">Day {{ pathway_state.current_day }} of 90</p>
+            {% endif %}
         </div>
-    </div>
-    {% endif %}
 
-    {% if learning_resources %}
-    <div class="learning-section">
-        <div class="card">
-            <h3>Recommended Resources</h3>
-            <ul class="resource-list">
-                {% for item in learning_resources %}
-                <li class="resource-item">
-                    <div class="resource-title">{{ item.resource.title }}</div>
-                    <div class="resource-meta">{{ item.resource.resource_type }} • {{ item.resource.duration }}</div>
-                    <div class="resource-description">{{ item.resource.description }}</div>
-                    {% if not item.resource.location %}
-                    <div class="resource-placeholder">Resource link will be available soon</div>
-                    {% endif %}
-                </li>
-                {% endfor %}
-            </ul>
+        <!-- CURRENT FOCUS -->
+        {% if pathway_state and pathway_state.current_focus %}
+        <div class="focus-card">
+            <h2>Current Focus</h2>
+            <div class="focus-content">{{ pathway_state.current_focus }}</div>
         </div>
-    </div>
-    {% endif %}
+        {% endif %}
 
-    <div class="coach-section">
-        <div class="card coach-card">
-            <h3>Ready to Talk?</h3>
-            <p>Your AI coach is here to help you make progress on your recovery plan.</p>
-            <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+        <!-- YOUR NEXT STEP -->
+        {% if next_step %}
+        <div class="next-step-card">
+            <h2>Your Next Step</h2>
+            <div class="next-step-title">{{ next_step.description }}</div>
+            {% if next_step.due_date %}
+            <div class="next-step-due">Due {{ next_step.due_date.strftime('%b %d') }}</div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- TALK TO MY COACH -->
+        <div class="coach-access">
+            <p>Need help getting started?</p>
+            <div class="coach-buttons">
                 <a href="{{ url_for('voice_coaching', engagement_id=engagement.id) }}" class="btn btn-primary btn-large" style="text-decoration: none;">
                     🎙️ Voice Coaching
                 </a>
@@ -106,8 +367,127 @@
                 </form>
             </div>
         </div>
-    </div>
 
-    {% endif %}
+        <!-- MY WORK -->
+        <div class="work-card">
+            <div class="work-tabs">
+                <button class="work-tab active" data-tab="active">
+                    Active
+                    <span class="tab-count">{{ categorized_commitments.next_actions|length + categorized_commitments.active|length }}</span>
+                </button>
+                <button class="work-tab" data-tab="completed">
+                    Completed
+                    <span class="tab-count">{{ categorized_commitments.completed_recent|length }}</span>
+                </button>
+            </div>
+            
+            <!-- Active Tab -->
+            <div class="work-tab-content active" id="active-work">
+                {% if categorized_commitments.next_actions or categorized_commitments.active %}
+                <table class="work-table">
+                    <thead>
+                        <tr>
+                            <th>Commitment / Action</th>
+                            <th>Status</th>
+                            <th>Target</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for commitment in categorized_commitments.next_actions %}
+                        <tr>
+                            <td><strong>{{ commitment.description }}</strong></td>
+                            <td><span class="badge status-open">Open</span></td>
+                            <td>{{ commitment.due_date.strftime('%b %d') if commitment.due_date else 'No date' }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% for commitment in categorized_commitments.active %}
+                        <tr>
+                            <td>{{ commitment.description }}</td>
+                            <td><span class="badge status-open">Open</span></td>
+                            <td>{{ commitment.due_date.strftime('%b %d') if commitment.due_date else 'No date' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="no-data">No active commitments.</p>
+                {% endif %}
+            </div>
+            
+            <!-- Completed Tab -->
+            <div class="work-tab-content" id="completed-work">
+                {% if categorized_commitments.completed_recent %}
+                <table class="work-table">
+                    <thead>
+                        <tr>
+                            <th>Completed Commitment / Action</th>
+                            <th>Completed On</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for commitment in categorized_commitments.completed_recent %}
+                        <tr>
+                            <td>✓ {{ commitment.description }}</td>
+                            <td>{{ commitment.completed_at.strftime('%b %d, %Y') if commitment.completed_at else 'Date unknown' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="no-data">No completed work yet.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% endif %}
+    </div>
+    
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        {% if engagement %}
+        <!-- HELPFUL RESOURCES -->
+        {% if learning_resources %}
+        <div class="sidebar-card">
+            <h3>Helpful Resources</h3>
+            {% for item in learning_resources %}
+            <div class="resource-item">
+                <div class="resource-title">{{ item.resource.title }}</div>
+                <div class="resource-meta">{{ item.resource.duration }}</div>
+                <div class="resource-description">{{ item.resource.description }}</div>
+                {% if item.resource.location %}
+                <a href="{{ item.resource.location }}" class="btn btn-sm btn-secondary" target="_blank">View Resource</a>
+                {% else %}
+                <div class="resource-placeholder" style="font-size: 0.875rem; color: #999; font-style: italic;">Resource link will be available soon</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="sidebar-card">
+            <h3>Helpful Resources</h3>
+            <p class="no-data" style="padding: 1rem 0;">No resources recommended yet.</p>
+        </div>
+        {% endif %}
+        {% endif %}
+    </div>
 </div>
+
+<script>
+// Tab switching for My Work
+document.querySelectorAll('.work-tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+        const targetTab = this.dataset.tab;
+        
+        // Update tab buttons
+        document.querySelectorAll('.work-tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        
+        // Update tab content
+        document.querySelectorAll('.work-tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        document.getElementById(targetTab + '-work').classList.add('active');
+    });
+});
+</script>
 {% endblock %}

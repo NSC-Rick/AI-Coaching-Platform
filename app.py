@@ -107,10 +107,20 @@ def client_home():
     
     pathway_data = load_pathway(engagement.pathway_id)
     
-    open_commitments = Commitment.query.filter_by(
-        engagement_id=engagement.id,
-        status='open'
-    ).order_by(Commitment.due_date).all()
+    # Get all commitments for categorization
+    all_commitments = Commitment.query.filter_by(
+        engagement_id=engagement.id
+    ).all()
+    
+    # Categorize commitments using existing helper
+    categorized_commitments = categorize_commitments(all_commitments)
+    
+    # Get next step (highest priority open commitment)
+    next_step = None
+    if categorized_commitments['next_actions']:
+        next_step = categorized_commitments['next_actions'][0]
+    elif categorized_commitments['active']:
+        next_step = categorized_commitments['active'][0]
     
     recent_learning = LearningRecord.query.filter_by(
         engagement_id=engagement.id,
@@ -134,7 +144,8 @@ def client_home():
                          engagement=engagement,
                          pathway_state=pathway_state,
                          pathway_data=pathway_data,
-                         open_commitments=open_commitments,
+                         categorized_commitments=categorized_commitments,
+                         next_step=next_step,
                          learning_resources=learning_resources)
 
 @app.route('/voice/coaching/<int:engagement_id>')
