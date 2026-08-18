@@ -144,7 +144,7 @@ def build_recent_developments_timeline(sessions, observations, events):
     for session in sessions[:5]:  # Last 5 sessions
         if session.summary:
             timeline.append({
-                'date': session.started_at,
+                'date': session.started_at,  # datetime
                 'type': 'session',
                 'content': session.summary,
                 'display_date': session.started_at.strftime('%b %d')
@@ -154,7 +154,7 @@ def build_recent_developments_timeline(sessions, observations, events):
     for obs in observations[:5]:
         if obs.status == 'active' and obs.importance in ['high', 'critical']:
             timeline.append({
-                'date': obs.created_at,
+                'date': obs.created_at,  # datetime
                 'type': 'observation',
                 'content': obs.observation,
                 'display_date': obs.created_at.strftime('%b %d')
@@ -162,14 +162,17 @@ def build_recent_developments_timeline(sessions, observations, events):
     
     # Add significant events
     for event in events[:3]:
-        timeline.append({
-            'date': event.event_date,
-            'type': 'event',
-            'content': f"{event.title}: {event.description}" if event.description else event.title,
-            'display_date': event.event_date.strftime('%b %d')
-        })
+        # Normalize event_date (date) to datetime for consistent sorting
+        event_datetime = datetime.combine(event.event_date, datetime.min.time()) if event.event_date else None
+        if event_datetime:
+            timeline.append({
+                'date': event_datetime,  # normalized to datetime
+                'type': 'event',
+                'content': f"{event.title}: {event.description}" if event.description else event.title,
+                'display_date': event.event_date.strftime('%b %d')
+            })
     
-    # Sort by date, newest first
+    # Sort by date, newest first (all dates are now datetime objects)
     timeline.sort(key=lambda x: x['date'], reverse=True)
     
     # Group by date for display
