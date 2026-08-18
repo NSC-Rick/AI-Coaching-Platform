@@ -64,6 +64,7 @@ def categorize_commitments(commitments):
     - historical: Older commitments
     """
     now = datetime.utcnow()
+    today = now.date()
     week_ago = now - timedelta(days=7)
     
     categorized = {
@@ -77,7 +78,7 @@ def categorize_commitments(commitments):
         if commitment.status == 'open':
             # Check if it's a next action (due soon or high priority)
             is_next_action = False
-            if commitment.due_date and commitment.due_date <= now + timedelta(days=2):
+            if commitment.due_date and commitment.due_date <= today + timedelta(days=2):
                 is_next_action = True
             elif commitment.priority == 'high':
                 is_next_action = True
@@ -227,8 +228,8 @@ def determine_advisor_attention_status(attention_items, risks, commitments):
         status['watch_items'].extend([risk.title for risk in critical_risks[:3]])
     
     # Check for overdue commitments
-    now = datetime.utcnow()
-    overdue = [c for c in commitments if c.status == 'open' and c.due_date and c.due_date < now]
+    today = datetime.utcnow().date()
+    overdue = [c for c in commitments if c.status == 'open' and c.due_date and c.due_date < today]
     if len(overdue) > 2:  # More than 2 overdue commitments
         if not status['needs_attention']:
             status['needs_attention'] = True
