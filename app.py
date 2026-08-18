@@ -11,6 +11,7 @@ from coaching.engine import load_pathway
 from coaching.prompts import build_coaching_system_prompt, build_extraction_prompt
 from coaching.validator import ExtractionValidator, ValidationError
 from coaching.persistence import apply_extraction_updates, PersistenceError
+from coaching.advisor_helpers import build_coaching_snapshot, categorize_commitments, categorize_risks, build_recent_developments_timeline, determine_advisor_attention_status
 from background_processor import trigger_session_processing
 
 logging.basicConfig(level=logging.INFO)
@@ -281,6 +282,16 @@ def client_detail(engagement_id):
     context = build_coaching_context(engagement_id)
     context_display = format_context_for_display(context)
     
+    # Build structured data for advisor presentation
+    coaching_snapshot = build_coaching_snapshot(context, pathway_state, sessions)
+    categorized_commitments = categorize_commitments(commitments)
+    categorized_risks = categorize_risks(risks)
+    recent_developments = build_recent_developments_timeline(sessions, coaching_observations, significant_events)
+    advisor_attention_status = determine_advisor_attention_status(attention_items, risks, commitments)
+    
+    # Get most recent session for last activity
+    last_session = sessions[0] if sessions else None
+    
     return render_template('client_detail.html',
                          engagement=engagement,
                          client=client,
@@ -295,7 +306,13 @@ def client_detail(engagement_id):
                          advisor_guidance=advisor_guidance,
                          attention_items=attention_items,
                          sessions=sessions,
-                         context_display=context_display)
+                         context_display=context_display,
+                         coaching_snapshot=coaching_snapshot,
+                         categorized_commitments=categorized_commitments,
+                         categorized_risks=categorized_risks,
+                         recent_developments=recent_developments,
+                         advisor_attention_status=advisor_attention_status,
+                         last_session=last_session)
 
 @app.route('/advisor/client/<int:engagement_id>/add_guidance', methods=['POST'])
 @require_role('ADVISOR')

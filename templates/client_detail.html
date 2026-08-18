@@ -4,42 +4,271 @@
 
 {% block content %}
 <div class="client-detail">
+    <!-- CLIENT HEADER -->
     <div class="detail-header">
-        <div>
-            <h2>{{ business.business_name if business else client.first_name + ' ' + client.last_name }}</h2>
-            <p class="client-name">{{ client.first_name }} {{ client.last_name }}</p>
+        <div class="header-info">
+            <h2>{{ client.first_name }} {{ client.last_name }}</h2>
+            <p class="business-name">{{ business.business_name if business else 'No business name' }}</p>
+            <div class="header-meta">
+                <span class="status-badge status-{{ engagement.status }}">{{ engagement.status|title }}</span>
+                {% if last_session %}
+                <span class="last-activity">Last activity: {{ last_session.started_at.strftime('%b %d, %Y') }}</span>
+                {% endif %}
+            </div>
         </div>
         <a href="{{ url_for('advisor_home') }}" class="btn btn-secondary">Back to Dashboard</a>
     </div>
 
-    <div class="detail-grid">
-        <div class="detail-main">
+    <!-- CURRENT COACHING SNAPSHOT -->
+    <div class="card snapshot-card">
+        <h3>Current Coaching Snapshot</h3>
+        
+        {% if coaching_snapshot.situation or coaching_snapshot.current_focus %}
+        <div class="snapshot-content">
+            {% if coaching_snapshot.situation %}
+            <p class="snapshot-situation">{{ coaching_snapshot.situation }}</p>
+            {% endif %}
             
-            <div class="card">
-                <h3>Pathway Status</h3>
-                <div class="pathway-info">
-                    <p><strong>Pathway:</strong> {{ pathway_data.manifest.name }}</p>
-                    {% if pathway_state %}
-                    <p><strong>Current Stage:</strong> {{ pathway_state.current_stage_id }} - 
-                        {% for stage in pathway_data.manifest.stages %}
-                            {% if stage.stage_id == pathway_state.current_stage_id %}
-                                {{ stage.name }}
-                            {% endif %}
-                        {% endfor %}
-                    </p>
-                    <p><strong>Day:</strong> {{ pathway_state.current_day }} of 90</p>
-                    {% if pathway_state.current_focus %}
-                    <p><strong>Current Focus:</strong> {{ pathway_state.current_focus }}</p>
-                    {% endif %}
-                    {% if pathway_state.current_priority_summary %}
-                    <p><strong>Current Priorities:</strong> {{ pathway_state.current_priority_summary }}</p>
-                    {% endif %}
-                    {% endif %}
+            {% if coaching_snapshot.current_focus %}
+            <div class="snapshot-focus">
+                <strong>Current Focus:</strong> {{ coaching_snapshot.current_focus }}
+            </div>
+            {% endif %}
+            
+            {% if coaching_snapshot.next_action %}
+            <div class="snapshot-action">
+                <strong>Next Meaningful Action:</strong> {{ coaching_snapshot.next_action }}
+            </div>
+            {% endif %}
+        </div>
+        {% else %}
+        <p class="no-data">No recent coaching activity to display.</p>
+        {% endif %}
+    </div>
+
+    <!-- ADVISOR ATTENTION + CURRENT STATUS -->
+    <div class="status-grid">
+        <div class="card attention-card">
+            <h3>Advisor Attention</h3>
+            {% if advisor_attention_status.needs_attention %}
+            <div class="attention-needed">
+                <strong>⚠ Advisor review recommended</strong>
+                <p>{{ advisor_attention_status.reason }}</p>
+            </div>
+            {% else %}
+            <p class="attention-ok">✓ No intervention currently required</p>
+            {% endif %}
+            
+            {% if advisor_attention_status.watch_items %}
+            <div class="watch-items">
+                <strong>Watch:</strong>
+                <ul>
+                    {% for item in advisor_attention_status.watch_items[:3] %}
+                    <li>{{ item }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            
+            <a href="#advisor-guidance" class="btn btn-sm btn-primary">+ Add Advisor Guidance</a>
+        </div>
+        
+        <div class="card status-card">
+            <h3>Current Status</h3>
+            <div class="status-metrics">
+                <div class="metric">
+                    <span class="metric-value">{{ categorized_commitments.active|length + categorized_commitments.next_actions|length }}</span>
+                    <span class="metric-label">Active Commitments</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-value">{{ categorized_risks.active|length + categorized_risks.watch|length }}</span>
+                    <span class="metric-label">Open Risks</span>
+                </div>
+                {% if pathway_state %}
+                <div class="metric">
+                    <span class="metric-value">Day {{ pathway_state.current_day }}</span>
+                    <span class="metric-label">{{ pathway_data.manifest.name }}</span>
+                </div>
+                {% endif %}
+                {% if last_session %}
+                <div class="metric">
+                    <span class="metric-value">{{ last_session.started_at.strftime('%b %d') }}</span>
+                    <span class="metric-label">Last Interaction</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ACTIVE WORK -->
+    <div class="card active-work-card">
+        <h3>Active Work</h3>
+        {% if categorized_commitments.next_actions or categorized_commitments.active %}
+        <table class="work-table">
+            <thead>
+                <tr>
+                    <th>Commitment / Action</th>
+                    <th>Status</th>
+                    <th>Target</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for commitment in categorized_commitments.next_actions %}
+                <tr class="next-action">
+                    <td><strong>{{ commitment.description }}</strong></td>
+                    <td><span class="badge priority-high">Next Action</span></td>
+                    <td>{{ commitment.due_date.strftime('%b %d') if commitment.due_date else 'No date' }}</td>
+                </tr>
+                {% endfor %}
+                {% for commitment in categorized_commitments.active[:5] %}
+                <tr>
+                    <td>{{ commitment.description }}</td>
+                    <td><span class="badge status-{{ commitment.status }}">{{ commitment.status|title }}</span></td>
+                    <td>{{ commitment.due_date.strftime('%b %d') if commitment.due_date else 'No date' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="no-data">No active commitments.</p>
+        {% endif %}
+    </div>
+
+    <!-- RECENT DEVELOPMENTS -->
+    <div class="card developments-card">
+        <h3>Recent Developments <span class="subtitle">Newest First</span></h3>
+        {% if recent_developments %}
+        <div class="timeline">
+            {% for day_group in recent_developments[:5] %}
+            <div class="timeline-group">
+                <div class="timeline-date">{{ day_group.date }}</div>
+                <div class="timeline-items">
+                    {% for item in day_group.items %}
+                    <div class="timeline-item type-{{ item.type }}">
+                        <div class="timeline-content">{{ item.content }}</div>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="no-data">No recent developments to display.</p>
+        {% endif %}
+    </div>
 
-            <div class="card">
-                <h3>Commitments</h3>
+    <!-- PATHWAY + RISKS -->
+    <div class="detail-grid">
+        <div class="card pathway-card">
+            <h3>Pathway Progress</h3>
+            {% if pathway_state %}
+            <div class="pathway-info">
+                <p><strong>{{ pathway_data.manifest.name }}</strong></p>
+                <p>Stage: {{ pathway_state.current_stage_id }} - Day {{ pathway_state.current_day }}</p>
+                {% if pathway_state.current_stage_id %}
+                {% for stage in pathway_data.manifest.stages %}
+                {% if stage.stage_id == pathway_state.current_stage_id %}
+                <p class="stage-name">{{ stage.name }}</p>
+                {% endif %}
+                {% endfor %}
+                {% endif %}
+            </div>
+            {% else %}
+            <p class="no-data">No pathway information available.</p>
+            {% endif %}
+        </div>
+        
+        <div class="card risks-card">
+            <h3>Risks & Watch Items</h3>
+            {% if categorized_risks.active or categorized_risks.watch %}
+            <ul class="risk-list">
+                {% for risk in categorized_risks.active %}
+                <li class="risk-item severity-{{ risk.severity }}">
+                    <span class="badge severity-{{ risk.severity }}">{{ risk.severity|upper }}</span>
+                    <strong>{{ risk.title }}</strong>
+                    {% if risk.description %}
+                    <p>{{ risk.description }}</p>
+                    {% endif %}
+                </li>
+                {% endfor %}
+                {% for risk in categorized_risks.watch[:3] %}
+                <li class="risk-item severity-{{ risk.severity }}">
+                    <span class="badge severity-{{ risk.severity }}">{{ risk.severity|upper }}</span>
+                    {{ risk.title }}
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="no-data">No active risks or watch items.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ADVISOR GUIDANCE -->
+    <div class="card guidance-card" id="advisor-guidance">
+        <h3>Advisor Guidance</h3>
+        
+        <form method="POST" action="{{ url_for('add_guidance', engagement_id=engagement.id) }}" class="guidance-form">
+            <div class="form-group">
+                <label for="guidance">Add Guidance</label>
+                <textarea id="guidance" name="guidance" rows="3" placeholder="Provide guidance or direction for this client..." required></textarea>
+            </div>
+            <div class="form-inline">
+                <div class="form-group">
+                    <label for="priority">Priority</label>
+                    <select id="priority" name="priority">
+                        <option value="normal">Normal</option>
+                        <option value="high">High</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Add Guidance</button>
+            </div>
+        </form>
+
+        {% if advisor_guidance %}
+        <div class="guidance-history">
+            <h4>Recent Guidance</h4>
+            {% for guidance in advisor_guidance[:5] %}
+            <div class="guidance-item status-{{ guidance.status }} priority-{{ guidance.priority }}">
+                <div class="guidance-text">{{ guidance.guidance }}</div>
+                <div class="guidance-meta">
+                    <span class="badge priority-{{ guidance.priority }}">{{ guidance.priority|title }}</span>
+                    <span class="guidance-date">{{ guidance.created_at.strftime('%b %d, %Y') }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- SUPPORTING RECORD -->
+    <div class="card supporting-record">
+        <h3>Supporting Record</h3>
+        <p class="record-description">Detailed coaching history and context</p>
+        
+        <details class="record-section">
+            <summary><strong>Client & Business Context</strong></summary>
+            <div class="record-content">
+                <p><strong>Client:</strong> {{ client.first_name }} {{ client.last_name }}</p>
+                {% if business %}
+                <p><strong>Business:</strong> {{ business.business_name }}</p>
+                {% if business.industry %}
+                <p><strong>Industry:</strong> {{ business.industry }}</p>
+                {% endif %}
+                {% if business.business_description %}
+                <p><strong>Description:</strong> {{ business.business_description }}</p>
+                {% endif %}
+                {% if business.current_situation_summary %}
+                <p><strong>Situation:</strong> {{ business.current_situation_summary }}</p>
+                {% endif %}
+                {% endif %}
+            </div>
+        </details>
+        
+        <details class="record-section">
+            <summary><strong>Complete Commitment History</strong> ({{ commitments|length }} total)</summary>
+            <div class="record-content">
+
                 {% if commitments %}
                 <table class="data-table">
                     <thead>
@@ -65,9 +294,12 @@
                 <p class="no-data">No commitments recorded.</p>
                 {% endif %}
             </div>
+        </details>
+        
+        <details class="record-section">
+            <summary><strong>Complete Risk History</strong> ({{ risks|length }} total)</summary>
+            <div class="record-content">
 
-            <div class="card">
-                <h3>Risks</h3>
                 {% if risks %}
                 <table class="data-table">
                     <thead>
@@ -98,80 +330,30 @@
                 <p class="no-data">No risks recorded.</p>
                 {% endif %}
             </div>
-
-            <div class="card">
-                <h3>Significant Events</h3>
-                {% if significant_events %}
-                <ul class="event-list">
-                    {% for event in significant_events %}
-                    <li class="event-item">
-                        <div class="event-date">{{ event.event_date.strftime('%Y-%m-%d') }}</div>
-                        <div class="event-content">
-                            <strong>{{ event.title }}</strong>
-                            {% if event.description %}
-                            <p>{{ event.description }}</p>
-                            {% endif %}
-                            {% if event.estimated_impact %}
-                            <p class="event-impact">Impact: {{ event.estimated_impact }}</p>
-                            {% endif %}
-                        </div>
-                    </li>
-                    {% endfor %}
-                </ul>
-                {% else %}
-                <p class="no-data">No significant events recorded.</p>
+        </details>
+        
+        <details class="record-section">
+            <summary><strong>Pathway Details</strong></summary>
+            <div class="record-content">
+                <p><strong>Pathway:</strong> {{ pathway_data.manifest.name }}</p>
+                <p><strong>Version:</strong> {{ pathway_data.manifest.version }}</p>
+                {% if pathway_state %}
+                <p><strong>Current Stage:</strong> {{ pathway_state.current_stage_id }}</p>
+                <p><strong>Day:</strong> {{ pathway_state.current_day }} of 90</p>
+                {% if pathway_state.current_focus %}
+                <p><strong>Current Focus:</strong> {{ pathway_state.current_focus }}</p>
+                {% endif %}
+                {% if pathway_state.current_priority_summary %}
+                <p><strong>Current Priorities:</strong> {{ pathway_state.current_priority_summary }}</p>
+                {% endif %}
                 {% endif %}
             </div>
+        </details>
+        
+        <details class="record-section">
+            <summary><strong>Coaching Sessions</strong> ({{ sessions|length }} recent)</summary>
+            <div class="record-content">
 
-            <div class="card">
-                <h3>Learning Activity</h3>
-                {% if learning_records %}
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Resource</th>
-                            <th>Status</th>
-                            <th>Recommended</th>
-                            <th>Completed</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for record in learning_records %}
-                        <tr>
-                            <td>{{ record.resource_id }}</td>
-                            <td><span class="badge status-{{ record.status }}">{{ record.status }}</span></td>
-                            <td>{{ record.recommended_at.strftime('%Y-%m-%d') }}</td>
-                            <td>{{ record.completed_at.strftime('%Y-%m-%d') if record.completed_at else '-' }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% else %}
-                <p class="no-data">No learning activity recorded.</p>
-                {% endif %}
-            </div>
-
-            <div class="card">
-                <h3>Coaching Observations</h3>
-                {% if coaching_observations %}
-                <ul class="observation-list">
-                    {% for obs in coaching_observations %}
-                    <li class="observation-item importance-{{ obs.importance }} status-{{ obs.status }}">
-                        {{ obs.observation }}
-                        <span class="observation-meta">
-                            <span class="badge status-{{ obs.status }}">{{ obs.status }}</span>
-                            <span class="observation-date">{{ obs.created_at.strftime('%Y-%m-%d') }}</span>
-                        </span>
-                    </li>
-                    {% endfor %}
-                </ul>
-                {% else %}
-                <p class="no-data">No coaching observations recorded.</p>
-                {% endif %}
-            </div>
-
-            <div class="card">
-                <h3>Recent Sessions</h3>
                 {% if sessions %}
                 <ul class="session-list">
                     {% for session in sessions %}
@@ -192,70 +374,36 @@
                 <p class="no-data">No sessions recorded.</p>
                 {% endif %}
             </div>
-
-        </div>
-
-        <div class="detail-sidebar">
-            
-            <div class="card">
-                <h3>Advisor Guidance</h3>
-                <form method="POST" action="{{ url_for('add_guidance', engagement_id=engagement.id) }}">
-                    <div class="form-group">
-                        <label for="guidance">Add Guidance</label>
-                        <textarea id="guidance" name="guidance" rows="4" required></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="priority">Priority</label>
-                        <select id="priority" name="priority">
-                            <option value="normal">Normal</option>
-                            <option value="high">High</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-block">Add Guidance</button>
-                </form>
-
-                {% if advisor_guidance %}
-                <div class="guidance-history">
-                    <h4>Guidance History</h4>
-                    {% for guidance in advisor_guidance %}
-                    <div class="guidance-item status-{{ guidance.status }}">
-                        <div class="guidance-text">{{ guidance.guidance }}</div>
-                        <div class="guidance-meta">
-                            <span class="badge priority-{{ guidance.priority }}">{{ guidance.priority or 'normal' }}</span>
-                            <span class="guidance-date">{{ guidance.created_at.strftime('%Y-%m-%d') }}</span>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% endif %}
-            </div>
-
-            <div class="card">
-                <h3>Attention Items</h3>
-                {% if attention_items %}
-                <ul class="attention-list">
-                    {% for item in attention_items %}
-                    <li class="attention-item priority-{{ item.priority }} status-{{ item.status }}">
-                        <strong>{{ item.title }}</strong>
-                        {% if item.description %}
-                        <p>{{ item.description }}</p>
-                        {% endif %}
-                        <span class="attention-date">{{ item.created_at.strftime('%Y-%m-%d') }}</span>
+        </details>
+        
+        <details class="record-section">
+            <summary><strong>Coaching Observations</strong> ({{ coaching_observations|length }} total)</summary>
+            <div class="record-content">
+                {% if coaching_observations %}
+                <ul class="observation-list">
+                    {% for obs in coaching_observations %}
+                    <li class="observation-item importance-{{ obs.importance }} status-{{ obs.status }}">
+                        {{ obs.observation }}
+                        <span class="observation-meta">
+                            <span class="badge status-{{ obs.status }}">{{ obs.status }}</span>
+                            <span class="observation-date">{{ obs.created_at.strftime('%Y-%m-%d') }}</span>
+                        </span>
                     </li>
                     {% endfor %}
                 </ul>
                 {% else %}
-                <p class="no-data">No attention items.</p>
+                <p class="no-data">No coaching observations recorded.</p>
                 {% endif %}
             </div>
-
-            <div class="card">
-                <h3>Coaching Context</h3>
-                <p class="context-description">This is the context that would be provided to the AI coach:</p>
+        </details>
+        
+        <details class="record-section">
+            <summary><strong>Extracted Coaching Context</strong></summary>
+            <div class="record-content">
+                <p class="context-description">This is the context provided to the AI coach:</p>
                 <pre class="context-display">{{ context_display }}</pre>
             </div>
-
-        </div>
+        </details>
     </div>
 </div>
 {% endblock %}
