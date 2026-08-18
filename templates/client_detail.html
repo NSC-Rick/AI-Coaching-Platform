@@ -143,7 +143,7 @@
             <div class="timeline-group">
                 <div class="timeline-date">{{ day_group.date }}</div>
                 <div class="timeline-items">
-                    {% for item in day_group.items %}
+                    {% for item in day_group["items"] %}
                     <div class="timeline-item type-{{ item.type }}">
                         <div class="timeline-content">{{ item.content }}</div>
                     </div>
