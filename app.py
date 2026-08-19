@@ -1141,6 +1141,99 @@ def process_pending_sessions_on_startup():
     except Exception as e:
         logging.error(f"[STARTUP] Error processing pending sessions: {str(e)}")
 
+# ============================================================
+# ELEVENLABS WEBHOOK ENDPOINT (Connectivity Spike)
+# ============================================================
+
+@app.route('/webhooks/elevenlabs/post-call', methods=['POST'])
+def elevenlabs_post_call_webhook():
+    """
+    ElevenLabs Post-Call Webhook receiver.
+    
+    This is a CONNECTIVITY SPIKE ONLY.
+    
+    Purpose: Verify that ElevenLabs can successfully send post-call
+    webhook data to the deployed Render application.
+    
+    This endpoint:
+    - Accepts POST requests from ElevenLabs
+    - Logs the received payload for inspection
+    - Returns HTTP 200
+    
+    This endpoint does NOT:
+    - Create or modify database records
+    - Associate webhooks with clients
+    - Create coaching sessions
+    - Invoke AI coaching service
+    - Invoke extraction/validation/persistence
+    - Update pathway state
+    - Create commitments or risks
+    - Modify any existing functionality
+    
+    TODO: Add ElevenLabs webhook signature verification before production use.
+    Currently accepts any POST request for connectivity testing only.
+    """
+    try:
+        # Get raw request data
+        content_type = request.content_type or 'unknown'
+        
+        logging.info("=" * 60)
+        logging.info("ELEVENLABS POST-CALL WEBHOOK RECEIVED")
+        logging.info("=" * 60)
+        logging.info(f"Content-Type: {content_type}")
+        logging.info(f"Request Method: {request.method}")
+        logging.info(f"Remote Address: {request.remote_addr}")
+        
+        # Attempt to parse JSON payload
+        if request.is_json:
+            try:
+                payload = request.get_json()
+                
+                # Pretty-print the JSON payload
+                import json
+                payload_str = json.dumps(payload, indent=2, default=str)
+                
+                logging.info("Payload (JSON):")
+                logging.info(payload_str)
+                
+            except Exception as json_error:
+                logging.error(f"Failed to parse JSON payload: {str(json_error)}")
+                logging.info("Raw data:")
+                logging.info(request.get_data(as_text=True))
+        else:
+            # Not JSON, log raw data
+            logging.info("Payload (not JSON):")
+            logging.info(request.get_data(as_text=True))
+        
+        logging.info("=" * 60)
+        logging.info("END ELEVENLABS WEBHOOK")
+        logging.info("=" * 60)
+        
+        # Return success
+        return jsonify({
+            'status': 'received',
+            'message': 'ElevenLabs post-call webhook received successfully'
+        }), 200
+        
+    except Exception as e:
+        # Log error but don't crash the application
+        logging.error("=" * 60)
+        logging.error("ELEVENLABS WEBHOOK ERROR")
+        logging.error("=" * 60)
+        logging.error(f"Error processing webhook: {str(e)}")
+        logging.error("=" * 60)
+        
+        # Return error response
+        return jsonify({
+            'status': 'error',
+            'message': 'Failed to process webhook'
+        }), 500
+
+
+# ============================================================
+# STARTUP RECOVERY
+# ============================================================
+
 # Call startup recovery when running under Gunicorn or other WSGI servers
 # This executes during module import, which happens once per worker
 if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
