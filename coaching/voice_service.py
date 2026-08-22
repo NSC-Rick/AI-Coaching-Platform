@@ -82,6 +82,39 @@ class VoiceService:
             return result
             
         except requests.exceptions.RequestException as e:
+            # Enhanced error logging for diagnosis (without exposing secrets)
+            import logging
+            logging.error("=" * 60)
+            logging.error("ELEVENLABS SIGNED URL REQUEST FAILED")
+            logging.error("=" * 60)
+            logging.error(f"Request URL: {url}")
+            logging.error(f"Request method: GET")
+            logging.error(f"Agent ID: {self.agent_id}")
+            logging.error(f"API key configured: {'Yes' if self.api_key else 'No'}")
+            logging.error(f"API key length: {len(self.api_key) if self.api_key else 0} characters")
+            logging.error(f"Header name used: xi-api-key")
+            
+            if hasattr(e, 'response') and e.response is not None:
+                logging.error(f"HTTP status code: {e.response.status_code}")
+                logging.error(f"Response headers: {dict(e.response.headers)}")
+                
+                # Log response body if available (sanitized)
+                try:
+                    response_body = e.response.text
+                    # Don't log if it contains tokens or keys
+                    if response_body and len(response_body) < 1000:
+                        logging.error(f"Response body: {response_body}")
+                    else:
+                        logging.error(f"Response body length: {len(response_body)} characters")
+                except:
+                    logging.error("Could not read response body")
+            else:
+                logging.error(f"No response object available")
+            
+            logging.error(f"Exception type: {type(e).__name__}")
+            logging.error(f"Exception message: {str(e)}")
+            logging.error("=" * 60)
+            
             raise Exception(f"Failed to generate ElevenLabs signed URL: {str(e)}")
     
     def build_session_config(
