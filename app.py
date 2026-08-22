@@ -12,6 +12,7 @@ from coaching.prompts import build_coaching_system_prompt, build_extraction_prom
 from coaching.validator import ExtractionValidator, ValidationError
 from coaching.persistence import apply_extraction_updates, PersistenceError
 from coaching.advisor_helpers import build_coaching_snapshot, categorize_commitments, categorize_risks, build_recent_developments_timeline, determine_advisor_attention_status
+from coaching.voice_service import get_voice_service
 from background_processor import trigger_session_processing
 
 logging.basicConfig(level=logging.INFO)
