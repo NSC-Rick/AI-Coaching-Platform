@@ -744,7 +744,8 @@ def init_voice_session(engagement_id):
             current_day=pathway_state.current_day if pathway_state else 1,
             coaching_context=format_context_for_display(context),
             session_id=str(session.id),
-            user_id=str(current_user.id)
+            user_id=str(current_user.id),
+            engagement_id=engagement_id
         )
         
         response_data = {

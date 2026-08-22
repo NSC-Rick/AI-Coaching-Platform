@@ -38,19 +38,19 @@ class VoiceService:
     
     def generate_signed_url(self, session_id: Optional[str] = None, engagement_id: Optional[int] = None) -> Dict[str, str]:
         """
-        Generate a signed URL for secure ElevenLabs agent access with application identity.
+        Generate a signed URL for secure ElevenLabs agent access.
         
         This is required for private agents. The signed URL provides temporary
         authenticated access to the conversational agent.
         
         Voice Spike 001D-1: Identity Round-Trip
-        The custom_llm_extra_body parameter allows passing application-controlled
-        metadata that will be returned in the post-call webhook, enabling
-        deterministic association of voice conversations with coaching relationships.
+        Application identity metadata (session_id, engagement_id) is passed to
+        build_session_config() and included in the conversation configuration,
+        not in the signed URL request itself.
         
         Args:
-            session_id: Optional application session ID for identity tracking
-            engagement_id: Optional engagement ID for identity tracking
+            session_id: Optional application session ID (stored for config, not used in URL request)
+            engagement_id: Optional engagement ID (stored for config, not used in URL request)
         
         Returns:
             dict: Contains 'signed_url' for client-side connection
@@ -63,26 +63,23 @@ class VoiceService:
             params = {'agent_id': self.agent_id}
             headers = {'xi-api-key': self.api_key}
             
-            # Build request body with custom metadata for identity round-trip
-            body = {}
+            # ElevenLabs API requires GET method for signed URL generation
+            # Identity metadata is passed via conversation config, not here
+            response = requests.get(url, params=params, headers=headers, timeout=10)
+            response.raise_for_status()
+            
+            data = response.json()
+            
+            # Store identity metadata for later use in session config
+            result = {'signed_url': data.get('signed_url')}
             if session_id or engagement_id:
-                # Use custom_llm_extra_body to pass application-controlled metadata
-                # This metadata will be returned in the post-call webhook
-                body['custom_llm_extra_body'] = {
+                result['metadata'] = {
                     'app_session_id': str(session_id) if session_id else None,
                     'app_engagement_id': str(engagement_id) if engagement_id else None,
                     'app_platform': 'ai_coaching_platform'
                 }
             
-            if body:
-                response = requests.post(url, params=params, headers=headers, json=body, timeout=10)
-            else:
-                response = requests.get(url, params=params, headers=headers, timeout=10)
-            
-            response.raise_for_status()
-            
-            data = response.json()
-            return {'signed_url': data.get('signed_url')}
+            return result
             
         except requests.exceptions.RequestException as e:
             raise Exception(f"Failed to generate ElevenLabs signed URL: {str(e)}")
@@ -96,7 +93,8 @@ class VoiceService:
         current_day: int,
         coaching_context: str,
         session_id: str,
-        user_id: str
+        user_id: str,
+        engagement_id: Optional[int] = None
     ) -> Dict[str, Any]:
         """
         Build session configuration with client context for the voice agent.
@@ -104,6 +102,9 @@ class VoiceService:
         This configuration will be used to initialize the ElevenLabs conversation
         with relevant client context, ensuring the voice coach has the same
         information as the text-based coach.
+        
+        Voice Spike 001D-1: Identity metadata is included in the conversation
+        configuration to enable round-trip through the post-call webhook.
         
         Args:
             client_name: Client's preferred name
@@ -114,11 +115,12 @@ class VoiceService:
             coaching_context: Full coaching context from context builder
             session_id: Session ID for tracking
             user_id: User ID for tracking
+            engagement_id: Optional engagement ID for identity round-trip
             
         Returns:
             dict: Configuration object for client-side initialization
         """
-        return {
+        config = {
             'agent_id': self.agent_id,
             'user_id': user_id,
             'session_metadata': {
@@ -144,6 +146,17 @@ class VoiceService:
                 }
             }
         }
+        
+        # Voice Spike 001D-1: Add identity metadata for webhook round-trip
+        # This metadata will be returned in the post-call webhook
+        if session_id or engagement_id:
+            config['conversation_config_override']['agent']['custom_llm_extra_body'] = {
+                'app_session_id': str(session_id) if session_id else None,
+                'app_engagement_id': str(engagement_id) if engagement_id else None,
+                'app_platform': 'ai_coaching_platform'
+            }
+        
+        return config
     
     def _build_agent_prompt(
         self,
