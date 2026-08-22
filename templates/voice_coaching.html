@@ -181,10 +181,10 @@
     </div>
     
     <div class="voice-controls">
-        <button id="startBtn" class="btn-voice btn-start" onclick="startVoiceSession()">
+        <button id="startBtn" class="btn-voice btn-start">
             Start Conversation
         </button>
-        <button id="endBtn" class="btn-voice btn-end" onclick="endVoiceSession()" style="display: none;">
+        <button id="endBtn" class="btn-voice btn-end" style="display: none;">
             End Conversation
         </button>
     </div>
@@ -192,8 +192,9 @@
     <div id="errorContainer"></div>
 </div>
 
-<script src="https://unpkg.com/@elevenlabs/client@0.1.0/dist/elevenlabs-client.umd.js"></script>
-<script>
+<script type="module">
+    import { Conversation } from 'https://elevenlabs.io/convai-widget/index.js';
+    
     let conversation = null;
     let sessionId = null;
     let conversationStartTime = null;
@@ -246,8 +247,7 @@
             
             updateStatus('Connecting to coach...', 'connecting');
             
-            const { Conversation } = window.ElevenLabsClient;
-            
+            // Use ElevenLabs Conversation API with signed URL
             conversation = await Conversation.startSession({
                 signedUrl: data.signed_url,
                 onConnect: () => {
@@ -372,6 +372,10 @@
             await completeSession();
         }
     }
+    
+    // Attach event listeners
+    startBtn.addEventListener('click', startVoiceSession);
+    endBtn.addEventListener('click', endVoiceSession);
     
     window.addEventListener('beforeunload', (e) => {
         if (conversation && sessionId) {
