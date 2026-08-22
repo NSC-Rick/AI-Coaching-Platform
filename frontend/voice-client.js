@@ -24,34 +24,92 @@ export async function startVoiceConversation(options) {
         onConnect,
         onDisconnect,
         onError,
-        onModeChange
+        onModeChange,
+        onStatusChange,
+        onMessage
     } = options;
 
     console.log('[VOICE] Starting ElevenLabs conversation with official SDK v1.21.0');
+    console.log('[VOICE] Signed URL present:', Boolean(signedUrl));
+    console.log('[VOICE] Signed URL length:', signedUrl?.length);
 
-    const conversation = await Conversation.startSession({
-        signedUrl,
-        onConnect: (data) => {
-            console.log('[VOICE] Conversation connected:', data);
-            if (onConnect) onConnect(data);
-        },
-        onDisconnect: () => {
-            console.log('[VOICE] Conversation disconnected');
-            if (onDisconnect) onDisconnect();
-        },
-        onError: (error) => {
-            console.error('[VOICE] Connection error:', error);
-            console.error('[VOICE] Error stack:', error.stack);
-            if (onError) onError(error);
-        },
-        onModeChange: (mode) => {
-            console.log('[VOICE] Mode change:', mode.mode);
-            if (onModeChange) onModeChange(mode);
+    try {
+        console.log('[VOICE] Calling Conversation.startSession');
+        
+        const conversation = await Conversation.startSession({
+            signedUrl,
+            
+            // Connection lifecycle callbacks
+            onConnect: (data) => {
+                console.log('[VOICE] ✓ onConnect fired');
+                console.log('[VOICE] Connection data:', data);
+                if (data?.conversationId) {
+                    console.log('[VOICE] Conversation ID:', data.conversationId);
+                }
+                if (onConnect) onConnect(data);
+            },
+            
+            onDisconnect: () => {
+                console.log('[VOICE] ✗ onDisconnect fired');
+                if (onDisconnect) onDisconnect();
+            },
+            
+            onError: (error) => {
+                console.error('[VOICE] ✗ onError fired');
+                console.error('[VOICE] Error type:', typeof error);
+                console.error('[VOICE] Error name:', error?.name);
+                console.error('[VOICE] Error message:', error?.message);
+                console.error('[VOICE] Error object:', error);
+                if (error?.stack) {
+                    console.error('[VOICE] Error stack:', error.stack);
+                }
+                if (onError) onError(error);
+            },
+            
+            // Status and mode tracking
+            onStatusChange: (status) => {
+                console.log('[VOICE] Status change:', status);
+                if (onStatusChange) onStatusChange(status);
+            },
+            
+            onModeChange: (mode) => {
+                console.log('[VOICE] Mode change:', mode);
+                console.log('[VOICE] Mode value:', mode?.mode);
+                if (onModeChange) onModeChange(mode);
+            },
+            
+            // Message tracking
+            onMessage: (message) => {
+                console.log('[VOICE] Message received:', {
+                    type: message?.type,
+                    role: message?.role,
+                    hasContent: Boolean(message?.content)
+                });
+                if (onMessage) onMessage(message);
+            },
+            
+            // Debug callback for detailed diagnostics
+            onDebug: (event) => {
+                console.log('[VOICE] Debug event:', event);
+            }
+        });
+
+        console.log('[VOICE] ✓ startSession resolved successfully');
+        console.log('[VOICE] Conversation object created:', Boolean(conversation));
+        console.log('[VOICE] Conversation type:', typeof conversation);
+        
+        return conversation;
+        
+    } catch (error) {
+        console.error('[VOICE] ✗ startSession REJECTED');
+        console.error('[VOICE] Rejection error name:', error?.name);
+        console.error('[VOICE] Rejection error message:', error?.message);
+        console.error('[VOICE] Rejection error:', error);
+        if (error?.stack) {
+            console.error('[VOICE] Rejection stack:', error.stack);
         }
-    });
-
-    console.log('[VOICE] Conversation started successfully');
-    return conversation;
+        throw error;
+    }
 }
 
 /**

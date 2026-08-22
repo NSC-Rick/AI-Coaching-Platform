@@ -199,6 +199,10 @@
     let sessionId = null;
     let conversationStartTime = null;
     
+    // Diagnostic state tracking
+    let userRequestedEnd = false;
+    let sessionCompletionSent = false;
+    
     const engagementId = {{ engagement.id }};
     const statusText = document.getElementById('statusText');
     const micIcon = document.getElementById('micIcon');
@@ -221,14 +225,24 @@
     
     async function startVoiceSession() {
         try {
+            console.log('[VOICE] ═══ START VOICE SESSION ═══');
+            console.log('[VOICE] Engagement ID:', engagementId);
+            
+            // Reset state flags
+            userRequestedEnd = false;
+            sessionCompletionSent = false;
+            
             clearError();
             updateStatus('Requesting microphone access...', 'connecting');
             startBtn.disabled = true;
             
+            console.log('[VOICE] Requesting microphone permission');
             await navigator.mediaDevices.getUserMedia({ audio: true });
+            console.log('[VOICE] ✓ Microphone permission granted');
             
             updateStatus('Initializing session...', 'connecting');
             
+            console.log('[VOICE] Backend initialization starting');
             const response = await fetch(`/voice/session/init/${engagementId}`, {
                 method: 'POST',
                 headers: {
@@ -245,7 +259,7 @@
             sessionId = data.session_id;
             conversationStartTime = new Date();
             
-            console.log('[VOICE] Backend session initialized:', sessionId);
+            console.log('[VOICE] ✓ Backend session initialized:', sessionId);
             console.log('[VOICE] Signed URL received:', {
                 hasSignedUrl: !!data.signed_url,
                 signedUrlLength: data.signed_url ? data.signed_url.length : 0
@@ -253,22 +267,39 @@
             
             updateStatus('Connecting to coach...', 'connecting');
             
-            // Use locally bundled ElevenLabs client
+            // Use locally bundled ElevenLabs client with comprehensive callbacks
             conversation = await startVoiceConversation({
                 signedUrl: data.signed_url,
+                
                 onConnect: () => {
+                    console.log('[VOICE] UI: Connection established');
                     updateStatus('Connected - Listening...', 'connected listening');
                     micIcon.classList.add('active');
                     startBtn.style.display = 'none';
                     endBtn.style.display = 'inline-block';
                     endBtn.disabled = false;
                 },
+                
                 onDisconnect: () => {
+                    console.warn('[VOICE] UI: Conversation disconnected', {
+                        userRequestedEnd,
+                        sessionCompletionSent
+                    });
+                    
                     updateStatus('Disconnected', '');
                     micIcon.classList.remove('active');
+                    
+                    if (userRequestedEnd) {
+                        console.log('[VOICE] Disconnect was user-initiated (normal)');
+                    } else {
+                        console.warn('[VOICE] ⚠ Disconnect was UNEXPECTED');
+                    }
+                    
                     handleSessionEnd();
                 },
+                
                 onError: (error) => {
+                    console.error('[VOICE] UI: Error callback received');
                     showError('Connection error: ' + (error.message || 'Unknown error'));
                     updateStatus('Error', 'error');
                     micIcon.classList.remove('active');
@@ -276,19 +307,35 @@
                     startBtn.style.display = 'inline-block';
                     endBtn.style.display = 'none';
                 },
+                
+                onStatusChange: (status) => {
+                    console.log('[VOICE] UI: Status change received:', status);
+                },
+                
                 onModeChange: (mode) => {
+                    console.log('[VOICE] UI: Mode change received:', mode?.mode);
                     if (mode.mode === 'speaking') {
                         updateStatus('Coach is speaking...', 'speaking');
                     } else {
                         updateStatus('Listening...', 'listening');
                     }
+                },
+                
+                onMessage: (message) => {
+                    console.log('[VOICE] UI: Message received');
                 }
             });
             
+            console.log('[VOICE] ✓ Voice session setup complete');
+            
         } catch (error) {
-            console.error('[VOICE] Failed to start voice session:', error);
-            console.error('[VOICE] Error message:', error.message);
-            console.error('[VOICE] Error stack:', error.stack);
+            console.error('[VOICE] ✗ Failed to start voice session');
+            console.error('[VOICE] Error name:', error?.name);
+            console.error('[VOICE] Error message:', error?.message);
+            console.error('[VOICE] Error:', error);
+            if (error?.stack) {
+                console.error('[VOICE] Error stack:', error.stack);
+            }
             showError('Failed to start conversation: ' + error.message);
             updateStatus('Failed to start', 'error');
             startBtn.disabled = false;
@@ -297,6 +344,9 @@
     
     async function endVoiceSession() {
         if (!conversation) return;
+        
+        console.log('[VOICE] ═══ USER REQUESTED END ═══');
+        userRequestedEnd = true;
         
         try {
             updateStatus('Ending session...', 'connecting');
@@ -315,10 +365,25 @@
     }
     
     async function completeSession() {
+        console.log('[VOICE] completeSession called', {
+            hasSessionId: Boolean(sessionId),
+            sessionCompletionSent,
+            userRequestedEnd
+        });
+        
+        // Prevent duplicate completion calls
+        if (sessionCompletionSent) {
+            console.warn('[VOICE] Session completion already sent, skipping');
+            return;
+        }
+        
         if (!sessionId) {
+            console.log('[VOICE] No session ID, redirecting to client home');
             window.location.href = '/client/home';
             return;
         }
+        
+        sessionCompletionSent = true;
         
         try {
             updateStatus('Processing conversation...', 'connecting');
@@ -330,6 +395,7 @@
                 messages: []
             };
             
+            console.log('[VOICE] Sending completion request for session:', sessionId);
             const response = await fetch(`/voice/session/${sessionId}/complete`, {
                 method: 'POST',
                 headers: {
@@ -342,27 +408,62 @@
                 throw new Error('Failed to complete session');
             }
             
+            console.log('[VOICE] ✓ Session completion successful');
             updateStatus('Session complete!', 'connected');
             
-            // Clear session state before redirect to prevent beforeunload from firing
-            conversation = null;
-            sessionId = null;
-            
-            setTimeout(() => {
-                window.location.href = '/client/home';
-            }, 2000);
+            // DIAGNOSTIC: Only redirect if user explicitly ended the conversation
+            if (userRequestedEnd) {
+                console.log('[VOICE] User-initiated end, redirecting to client home');
+                
+                // Clear session state before redirect to prevent beforeunload from firing
+                conversation = null;
+                sessionId = null;
+                
+                setTimeout(() => {
+                    window.location.href = '/client/home';
+                }, 2000);
+            } else {
+                console.warn('[VOICE] ⚠ UNEXPECTED DISCONNECT - staying on page for diagnostics');
+                updateStatus('Voice connection ended unexpectedly. Check browser console for diagnostic details.', 'error');
+                
+                // Clear session state but DO NOT redirect
+                conversation = null;
+                sessionId = null;
+                
+                // Re-enable start button for retry
+                startBtn.disabled = false;
+                startBtn.style.display = 'inline-block';
+                endBtn.style.display = 'none';
+            }
             
         } catch (error) {
-            console.error('Error completing session:', error);
+            console.error('[VOICE] ✗ Error completing session:', error);
             showError('Session ended but there was an error processing it.');
             
-            // Clear session state before redirect
-            conversation = null;
-            sessionId = null;
-            
-            setTimeout(() => {
-                window.location.href = '/client/home';
-            }, 3000);
+            // DIAGNOSTIC: Only redirect if user explicitly ended
+            if (userRequestedEnd) {
+                console.log('[VOICE] User-initiated end with error, redirecting');
+                
+                // Clear session state before redirect
+                conversation = null;
+                sessionId = null;
+                
+                setTimeout(() => {
+                    window.location.href = '/client/home';
+                }, 3000);
+            } else {
+                console.warn('[VOICE] ⚠ Unexpected disconnect with completion error - staying on page');
+                updateStatus('Voice connection ended with error. Check browser console.', 'error');
+                
+                // Clear session state but DO NOT redirect
+                conversation = null;
+                sessionId = null;
+                
+                // Re-enable start button
+                startBtn.disabled = false;
+                startBtn.style.display = 'inline-block';
+                endBtn.style.display = 'none';
+            }
         }
     }
     
