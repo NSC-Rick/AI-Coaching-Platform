@@ -192,8 +192,9 @@
     <div id="errorContainer"></div>
 </div>
 
-<script type="module">
-    import { Conversation } from 'https://elevenlabs.io/convai-widget/index.js';
+<script src="https://unpkg.com/@elevenlabs/client@0.1.3/dist/elevenlabs-client.umd.js"></script>
+<script>
+    console.log('ElevenLabs SDK loaded, checking global:', typeof window.ElevenLabs);
     
     let conversation = null;
     let sessionId = null;
@@ -245,12 +246,26 @@
             sessionId = data.session_id;
             conversationStartTime = new Date();
             
+            console.log('Backend initialization successful:', {
+                sessionId: sessionId,
+                hasSignedUrl: !!data.signed_url,
+                signedUrlLength: data.signed_url ? data.signed_url.length : 0
+            });
+            
             updateStatus('Connecting to coach...', 'connecting');
             
-            // Use ElevenLabs Conversation API with signed URL
-            conversation = await Conversation.startSession({
+            // Verify ElevenLabs SDK is loaded
+            if (!window.ElevenLabs || !window.ElevenLabs.Conversation) {
+                throw new Error('ElevenLabs SDK not loaded. Check console for details.');
+            }
+            
+            console.log('Starting ElevenLabs conversation with signed URL...');
+            
+            // Use official @elevenlabs/client API
+            conversation = await window.ElevenLabs.Conversation.startSession({
                 signedUrl: data.signed_url,
                 onConnect: () => {
+                    console.log('ElevenLabs conversation connected');
                     updateStatus('Connected - Listening...', 'connected listening');
                     micIcon.classList.add('active');
                     startBtn.style.display = 'none';
@@ -258,12 +273,13 @@
                     endBtn.disabled = false;
                 },
                 onDisconnect: () => {
+                    console.log('ElevenLabs conversation disconnected');
                     updateStatus('Disconnected', '');
                     micIcon.classList.remove('active');
                     handleSessionEnd();
                 },
                 onError: (error) => {
-                    console.error('ElevenLabs error:', error);
+                    console.error('ElevenLabs connection error:', error);
                     showError('Connection error: ' + (error.message || 'Unknown error'));
                     updateStatus('Error', 'error');
                     micIcon.classList.remove('active');
@@ -272,6 +288,7 @@
                     endBtn.style.display = 'none';
                 },
                 onModeChange: (mode) => {
+                    console.log('ElevenLabs mode change:', mode);
                     if (mode.mode === 'speaking') {
                         updateStatus('Coach is speaking...', 'speaking');
                     } else {
@@ -279,6 +296,8 @@
                     }
                 }
             });
+            
+            console.log('ElevenLabs conversation started successfully');
             
         } catch (error) {
             console.error('Failed to start voice session:', error);
