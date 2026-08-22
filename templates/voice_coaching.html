@@ -192,9 +192,17 @@
     <div id="errorContainer"></div>
 </div>
 
-<script src="https://unpkg.com/@elevenlabs/client@0.1.3/dist/elevenlabs-client.umd.js"></script>
-<script>
-    console.log('ElevenLabs SDK loaded, checking global:', typeof window.ElevenLabs);
+<script type="importmap">
+{
+  "imports": {
+    "@elevenlabs/client": "https://cdn.jsdelivr.net/npm/@elevenlabs/client@0.1.3/+esm"
+  }
+}
+</script>
+<script type="module">
+    import { Conversation } from '@elevenlabs/client';
+    
+    console.log('[VOICE] ElevenLabs SDK ready');
     
     let conversation = null;
     let sessionId = null;
@@ -246,26 +254,21 @@
             sessionId = data.session_id;
             conversationStartTime = new Date();
             
-            console.log('Backend initialization successful:', {
-                sessionId: sessionId,
+            console.log('[VOICE] Backend session initialized:', sessionId);
+            console.log('[VOICE] Signed URL received:', {
                 hasSignedUrl: !!data.signed_url,
                 signedUrlLength: data.signed_url ? data.signed_url.length : 0
             });
             
             updateStatus('Connecting to coach...', 'connecting');
             
-            // Verify ElevenLabs SDK is loaded
-            if (!window.ElevenLabs || !window.ElevenLabs.Conversation) {
-                throw new Error('ElevenLabs SDK not loaded. Check console for details.');
-            }
+            console.log('[VOICE] Starting ElevenLabs conversation');
             
-            console.log('Starting ElevenLabs conversation with signed URL...');
-            
-            // Use official @elevenlabs/client API
-            conversation = await window.ElevenLabs.Conversation.startSession({
+            // Use official @elevenlabs/client API with signed URL
+            conversation = await Conversation.startSession({
                 signedUrl: data.signed_url,
                 onConnect: () => {
-                    console.log('ElevenLabs conversation connected');
+                    console.log('[VOICE] Conversation connected');
                     updateStatus('Connected - Listening...', 'connected listening');
                     micIcon.classList.add('active');
                     startBtn.style.display = 'none';
@@ -273,13 +276,14 @@
                     endBtn.disabled = false;
                 },
                 onDisconnect: () => {
-                    console.log('ElevenLabs conversation disconnected');
+                    console.log('[VOICE] Conversation disconnected');
                     updateStatus('Disconnected', '');
                     micIcon.classList.remove('active');
                     handleSessionEnd();
                 },
                 onError: (error) => {
-                    console.error('ElevenLabs connection error:', error);
+                    console.error('[VOICE] Connection error:', error);
+                    console.error('[VOICE] Error stack:', error.stack);
                     showError('Connection error: ' + (error.message || 'Unknown error'));
                     updateStatus('Error', 'error');
                     micIcon.classList.remove('active');
@@ -288,7 +292,7 @@
                     endBtn.style.display = 'none';
                 },
                 onModeChange: (mode) => {
-                    console.log('ElevenLabs mode change:', mode);
+                    console.log('[VOICE] Mode change:', mode.mode);
                     if (mode.mode === 'speaking') {
                         updateStatus('Coach is speaking...', 'speaking');
                     } else {
@@ -297,10 +301,10 @@
                 }
             });
             
-            console.log('ElevenLabs conversation started successfully');
-            
         } catch (error) {
-            console.error('Failed to start voice session:', error);
+            console.error('[VOICE] Failed to start voice session:', error);
+            console.error('[VOICE] Error message:', error.message);
+            console.error('[VOICE] Error stack:', error.stack);
             showError('Failed to start conversation: ' + error.message);
             updateStatus('Failed to start', 'error');
             startBtn.disabled = false;
