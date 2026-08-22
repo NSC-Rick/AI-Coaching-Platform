@@ -1,0 +1,15 @@
+{
+  "name": "ai-coaching-platform-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Frontend build for AI Coaching Platform voice client",
+  "scripts": {
+    "build": "esbuild frontend/voice-client.js --bundle --format=esm --outfile=static/js/voice-client.js --minify"
+  },
+  "dependencies": {
+    "@elevenlabs/client": "^1.21.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.19.0"
+  }
+}

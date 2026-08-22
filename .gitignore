@@ -46,3 +46,7 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Node.js / npm (for frontend build only)
+node_modules/
+package-lock.json
