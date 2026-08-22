@@ -5,191 +5,380 @@
 {% block head %}
 <style>
     .voice-container {
-        max-width: 600px;
+        max-width: 700px;
         margin: 0 auto;
-        padding: 20px;
+        padding: 1.5rem;
     }
     
-    .voice-status {
-        text-align: center;
-        padding: 40px 20px;
-        background: #f8f9fa;
+    /* Coach Session Card */
+    .coach-session-card {
+        background: var(--card-bg);
         border-radius: 12px;
-        margin-bottom: 30px;
+        padding: 3rem 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        text-align: center;
     }
     
-    .voice-status h2 {
-        margin: 0 0 10px 0;
-        color: #333;
+    .session-header {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: var(--text-secondary);
+        margin-bottom: 2rem;
+        font-weight: 600;
+    }
+    
+    /* Coach Avatar */
+    .coach-avatar {
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 1.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3.5rem;
+        box-shadow: 0 8px 16px rgba(102, 126, 234, 0.25);
+        transition: all 0.3s ease;
+    }
+    
+    .coach-avatar.active {
+        animation: pulse-glow 2s ease-in-out infinite;
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+    }
+    
+    @keyframes pulse-glow {
+        0%, 100% { 
+            transform: scale(1);
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+        }
+        50% { 
+            transform: scale(1.05);
+            box-shadow: 0 12px 32px rgba(102, 126, 234, 0.5);
+        }
+    }
+    
+    .coach-title {
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+    }
+    
+    .coach-subtitle {
+        font-size: 0.95rem;
+        color: var(--text-secondary);
+        margin-bottom: 1.5rem;
+    }
+    
+    /* Status Messages */
+    .status-message {
+        font-size: 1.1rem;
+        color: var(--text-primary);
+        margin: 1.5rem 0;
+        min-height: 1.5rem;
     }
     
     .status-indicator {
-        font-size: 18px;
-        color: #666;
-        margin: 10px 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        margin: 0.75rem 0;
     }
     
     .status-indicator.connecting {
-        color: #ffc107;
+        color: var(--warning-color);
     }
     
     .status-indicator.connected {
-        color: #28a745;
+        color: var(--success-color);
     }
     
     .status-indicator.speaking {
-        color: #007bff;
+        color: var(--primary-color);
         font-weight: 600;
     }
     
     .status-indicator.listening {
-        color: #17a2b8;
+        color: var(--success-color);
         font-weight: 600;
     }
     
     .status-indicator.error {
-        color: #dc3545;
+        color: var(--danger-color);
     }
     
-    .microphone-icon {
-        font-size: 80px;
-        margin: 20px 0;
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: currentColor;
+        display: inline-block;
     }
     
-    .microphone-icon.active {
-        animation: pulse 1.5s ease-in-out infinite;
-    }
-    
-    @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
-    }
-    
-    .voice-controls {
-        text-align: center;
-        margin: 30px 0;
-    }
-    
-    .btn-voice {
-        padding: 15px 40px;
-        font-size: 18px;
+    /* Primary CTA Button */
+    .btn-voice-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem 2.5rem;
+        font-size: 1.1rem;
+        font-weight: 600;
         border-radius: 50px;
         border: none;
         cursor: pointer;
-        transition: all 0.3s;
-        min-width: 200px;
+        transition: all 0.2s ease;
+        background: var(--primary-color);
+        color: white;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+        min-width: 240px;
+        justify-content: center;
     }
     
-    .btn-voice:disabled {
-        opacity: 0.5;
+    .btn-voice-primary:hover:not(:disabled) {
+        background: var(--primary-hover);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+    }
+    
+    .btn-voice-primary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    .btn-voice-secondary {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.875rem 2rem;
+        font-size: 1rem;
+        font-weight: 500;
+        border-radius: 50px;
+        border: 2px solid var(--danger-color);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: white;
+        color: var(--danger-color);
+        min-width: 200px;
+        justify-content: center;
+    }
+    
+    .btn-voice-secondary:hover:not(:disabled) {
+        background: var(--danger-color);
+        color: white;
+    }
+    
+    .btn-voice-secondary:disabled {
+        opacity: 0.6;
         cursor: not-allowed;
     }
     
-    .btn-start {
-        background: #28a745;
-        color: white;
+    .session-note {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        margin-top: 1.5rem;
+        line-height: 1.5;
     }
     
-    .btn-start:hover:not(:disabled) {
-        background: #218838;
-    }
-    
-    .btn-end {
-        background: #dc3545;
-        color: white;
-    }
-    
-    .btn-end:hover:not(:disabled) {
-        background: #c82333;
-    }
-    
-    .context-info {
-        background: white;
+    /* Current Focus Card */
+    .focus-card {
+        background: var(--card-bg);
         border-radius: 8px;
-        padding: 20px;
-        margin-bottom: 20px;
-        border: 1px solid #dee2e6;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
     
-    .context-info h4 {
-        margin: 0 0 15px 0;
-        color: #495057;
-        font-size: 14px;
+    .focus-header {
+        font-size: 0.7rem;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 1.2px;
+        color: var(--text-secondary);
+        margin-bottom: 1rem;
+        font-weight: 600;
     }
     
-    .context-item {
-        margin: 8px 0;
-        font-size: 14px;
-        color: #666;
+    .focus-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+        flex-wrap: wrap;
+        gap: 0.5rem;
     }
     
-    .context-item strong {
-        color: #333;
+    .focus-pathway {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
     }
     
+    .focus-stage {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        background: var(--bg-color);
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-weight: 500;
+    }
+    
+    .focus-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .focus-description {
+        font-size: 0.95rem;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+        line-height: 1.5;
+    }
+    
+    .progress-bar-container {
+        width: 100%;
+        height: 6px;
+        background: var(--bg-color);
+        border-radius: 3px;
+        overflow: hidden;
+    }
+    
+    .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary-color), #667eea);
+        border-radius: 3px;
+        transition: width 0.3s ease;
+    }
+    
+    /* Error Messages */
     .error-message {
-        background: #f8d7da;
-        color: #721c24;
-        padding: 15px;
+        background: #fee2e2;
+        color: #991b1b;
+        padding: 1rem;
         border-radius: 8px;
-        margin: 20px 0;
-        border: 1px solid #f5c6cb;
+        margin: 1.5rem 0;
+        border: 1px solid #fecaca;
+        font-size: 0.95rem;
     }
     
-    .loading {
-        text-align: center;
-        padding: 40px;
-    }
-    
-    .spinner {
-        border: 4px solid #f3f3f3;
-        border-top: 4px solid #007bff;
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        animation: spin 1s linear infinite;
-        margin: 0 auto 20px;
-    }
-    
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
+    /* Mobile Responsive */
+    @media (max-width: 640px) {
+        .voice-container {
+            padding: 1rem;
+        }
+        
+        .coach-session-card {
+            padding: 2rem 1.5rem;
+        }
+        
+        .coach-avatar {
+            width: 100px;
+            height: 100px;
+            font-size: 3rem;
+        }
+        
+        .coach-title {
+            font-size: 1.5rem;
+        }
+        
+        .btn-voice-primary,
+        .btn-voice-secondary {
+            width: 100%;
+            min-width: auto;
+        }
+        
+        .focus-title {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .focus-meta {
+            flex-direction: column;
+            align-items: flex-start;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="voice-container">
-    <div class="context-info">
-        <h4>Current Focus</h4>
-        <div class="context-item"><strong>Pathway:</strong> {{ pathway_data.manifest.name }}</div>
-        {% if pathway_state %}
-        <div class="context-item"><strong>Stage:</strong> {{ pathway_state.current_stage_id }}</div>
-        <div class="context-item"><strong>Day:</strong> {{ pathway_state.current_day }} of 90</div>
-        {% if pathway_state.current_focus %}
-        <div class="context-item"><strong>Focus:</strong> {{ pathway_state.current_focus }}</div>
-        {% endif %}
-        {% endif %}
-    </div>
-    
-    <div class="voice-status">
-        <h2>My Coach</h2>
-        <div class="microphone-icon" id="micIcon">🎙️</div>
-        <div class="status-indicator" id="statusText">Ready to start</div>
-    </div>
-    
-    <div class="voice-controls">
-        <button id="startBtn" class="btn-voice btn-start">
-            Start Conversation
-        </button>
-        <button id="endBtn" class="btn-voice btn-end" style="display: none;">
-            End Conversation
-        </button>
+    <!-- Coach Session Card -->
+    <div class="coach-session-card">
+        <div class="session-header">Your Coaching Session</div>
+        
+        <div class="coach-avatar" id="coachAvatar">
+            🎙️
+        </div>
+        
+        <h1 class="coach-title">My Coach</h1>
+        <div class="coach-subtitle">{{ pathway_data.manifest.name }} Coach</div>
+        
+        <div class="status-message" id="statusMessage">
+            Ready when you are, {{ engagement.client.first_name }}.
+        </div>
+        
+        <div class="status-indicator" id="statusText" style="display: none;">
+            <span class="status-dot"></span>
+            <span id="statusLabel"></span>
+        </div>
+        
+        <div style="margin: 2rem 0;">
+            <button id="startBtn" class="btn-voice-primary">
+                <span>🎙️</span>
+                <span>Start Conversation</span>
+            </button>
+            <button id="endBtn" class="btn-voice-secondary" style="display: none;">
+                <span>End Conversation</span>
+            </button>
+        </div>
+        
+        <div class="session-note">
+            AI-powered coaching based on your<br>current goals and progress.
+        </div>
     </div>
     
     <div id="errorContainer"></div>
+    
+    <!-- Current Focus Card -->
+    <div class="focus-card">
+        <div class="focus-header">Current Focus</div>
+        
+        <div class="focus-title">
+            <div class="focus-pathway">{{ pathway_data.manifest.name }}</div>
+            {% if pathway_state %}
+            <div class="focus-stage">{{ pathway_state.current_stage_id }}</div>
+            {% endif %}
+        </div>
+        
+        {% if pathway_state %}
+        <div class="focus-meta">
+            <div>Day {{ pathway_state.current_day }} of 90</div>
+            <div>In Progress</div>
+        </div>
+        
+        {% if pathway_state.current_focus %}
+        <div class="focus-description">
+            {{ pathway_state.current_focus }}
+        </div>
+        {% endif %}
+        
+        {% if pathway_state.current_day %}
+        <div class="progress-bar-container">
+            <div class="progress-bar-fill" style="width: {{ (pathway_state.current_day / 90 * 100)|round|int }}%;"></div>
+        </div>
+        {% endif %}
+        {% endif %}
+    </div>
 </div>
 
 <script type="module">
@@ -205,14 +394,49 @@
     
     const engagementId = {{ engagement.id }};
     const statusText = document.getElementById('statusText');
-    const micIcon = document.getElementById('micIcon');
+    const statusMessage = document.getElementById('statusMessage');
+    const statusLabel = document.getElementById('statusLabel');
+    const coachAvatar = document.getElementById('coachAvatar');
     const startBtn = document.getElementById('startBtn');
     const endBtn = document.getElementById('endBtn');
     const errorContainer = document.getElementById('errorContainer');
     
     function updateStatus(text, className = '') {
-        statusText.textContent = text;
+        // Update technical status indicator (hidden by default, shown during active session)
+        statusLabel.textContent = text;
         statusText.className = 'status-indicator ' + className;
+        
+        // Update friendly status message
+        const friendlyMessages = {
+            'Requesting microphone access...': 'Requesting microphone access...',
+            'Initializing session...': 'Initializing your session...',
+            'Connecting to coach...': 'Connecting to your coach...',
+            'Connected - Listening...': 'Connected',
+            'Listening...': 'Listening...',
+            'Coach is speaking...': 'Coach is speaking...',
+            'Disconnected': 'Session ended',
+            'Error': 'Connection error',
+            'Ending session...': 'Ending session...',
+            'Processing conversation...': 'Processing conversation...',
+            'Session complete!': 'Session complete!',
+            'Failed to start': 'Failed to start'
+        };
+        
+        const friendlyText = friendlyMessages[text] || text;
+        
+        // Show/hide status elements based on state
+        if (className === 'connecting' || className === 'connected' || className === 'listening' || className === 'speaking') {
+            statusMessage.style.display = 'none';
+            statusText.style.display = 'inline-flex';
+        } else if (className === 'error') {
+            statusMessage.textContent = friendlyText;
+            statusMessage.style.display = 'block';
+            statusText.style.display = 'none';
+        } else {
+            statusMessage.textContent = friendlyText;
+            statusMessage.style.display = 'block';
+            statusText.style.display = 'none';
+        }
     }
     
     function showError(message) {
@@ -278,7 +502,7 @@
                 onConnect: () => {
                     console.log('[VOICE] UI: Connection established');
                     updateStatus('Connected - Listening...', 'connected listening');
-                    micIcon.classList.add('active');
+                    coachAvatar.classList.add('active');
                     startBtn.style.display = 'none';
                     endBtn.style.display = 'inline-block';
                     endBtn.disabled = false;
@@ -291,7 +515,7 @@
                     });
                     
                     updateStatus('Disconnected', '');
-                    micIcon.classList.remove('active');
+                    coachAvatar.classList.remove('active');
                     
                     if (userRequestedEnd) {
                         console.log('[VOICE] Disconnect was user-initiated (normal)');
@@ -306,7 +530,7 @@
                     console.error('[VOICE] UI: Error callback received');
                     showError('Connection error: ' + (error.message || 'Unknown error'));
                     updateStatus('Error', 'error');
-                    micIcon.classList.remove('active');
+                    coachAvatar.classList.remove('active');
                     startBtn.disabled = false;
                     startBtn.style.display = 'inline-block';
                     endBtn.style.display = 'none';
