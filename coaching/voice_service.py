@@ -36,12 +36,21 @@ class VoiceService:
         if not self.agent_id:
             raise ValueError("ELEVENLABS_AGENT_ID environment variable is required")
     
-    def generate_signed_url(self) -> Dict[str, str]:
+    def generate_signed_url(self, session_id: Optional[str] = None, engagement_id: Optional[int] = None) -> Dict[str, str]:
         """
-        Generate a signed URL for secure ElevenLabs agent access.
+        Generate a signed URL for secure ElevenLabs agent access with application identity.
         
         This is required for private agents. The signed URL provides temporary
         authenticated access to the conversational agent.
+        
+        Voice Spike 001D-1: Identity Round-Trip
+        The custom_llm_extra_body parameter allows passing application-controlled
+        metadata that will be returned in the post-call webhook, enabling
+        deterministic association of voice conversations with coaching relationships.
+        
+        Args:
+            session_id: Optional application session ID for identity tracking
+            engagement_id: Optional engagement ID for identity tracking
         
         Returns:
             dict: Contains 'signed_url' for client-side connection
@@ -54,7 +63,22 @@ class VoiceService:
             params = {'agent_id': self.agent_id}
             headers = {'xi-api-key': self.api_key}
             
-            response = requests.get(url, params=params, headers=headers, timeout=10)
+            # Build request body with custom metadata for identity round-trip
+            body = {}
+            if session_id or engagement_id:
+                # Use custom_llm_extra_body to pass application-controlled metadata
+                # This metadata will be returned in the post-call webhook
+                body['custom_llm_extra_body'] = {
+                    'app_session_id': str(session_id) if session_id else None,
+                    'app_engagement_id': str(engagement_id) if engagement_id else None,
+                    'app_platform': 'ai_coaching_platform'
+                }
+            
+            if body:
+                response = requests.post(url, params=params, headers=headers, json=body, timeout=10)
+            else:
+                response = requests.get(url, params=params, headers=headers, timeout=10)
+            
             response.raise_for_status()
             
             data = response.json()

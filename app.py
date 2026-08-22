@@ -729,7 +729,11 @@ def init_voice_session(engagement_id):
         pathway_data = load_pathway(engagement.pathway_id)
         pathway_state = engagement.pathway_state
         
-        signed_url_data = voice_service.generate_signed_url()
+        # Voice Spike 001D-1: Pass application identifiers for round-trip
+        signed_url_data = voice_service.generate_signed_url(
+            session_id=str(session.id),
+            engagement_id=engagement_id
+        )
         
         session_config = voice_service.build_session_config(
             client_name=engagement.client.user.first_name or engagement.client.user.email.split('@')[0],
@@ -1150,17 +1154,19 @@ def elevenlabs_post_call_webhook():
     """
     ElevenLabs Post-Call Webhook receiver.
     
-    This is a CONNECTIVITY SPIKE ONLY.
+    Voice Spike 001D-1: Identity Round-Trip
     
-    Purpose: Verify that ElevenLabs can successfully send post-call
-    webhook data to the deployed Render application.
+    Purpose: Verify that application-controlled identity can be recovered
+    from ElevenLabs post-call webhooks.
     
     This endpoint:
+    - Verifies HMAC signature (if ELEVENLABS_WEBHOOK_SECRET is configured)
     - Accepts POST requests from ElevenLabs
-    - Logs the received payload for inspection
+    - Extracts application identity metadata
+    - Logs the received payload and identity for inspection
     - Returns HTTP 200
     
-    This endpoint does NOT:
+    This endpoint does NOT (yet):
     - Create or modify database records
     - Associate webhooks with clients
     - Create coaching sessions
@@ -1168,12 +1174,38 @@ def elevenlabs_post_call_webhook():
     - Invoke extraction/validation/persistence
     - Update pathway state
     - Create commitments or risks
-    - Modify any existing functionality
     
-    TODO: Add ElevenLabs webhook signature verification before production use.
-    Currently accepts any POST request for connectivity testing only.
+    Identity round-trip is proven, but transcript persistence is deferred
+    to Voice Spike 001D-2.
     """
     try:
+        # Voice Spike 001D-1: HMAC Signature Verification
+        webhook_secret = os.environ.get('ELEVENLABS_WEBHOOK_SECRET')
+        if webhook_secret:
+            signature_header = request.headers.get('ElevenLabs-Signature')
+            if not signature_header:
+                logging.warning("ELEVENLABS WEBHOOK: Missing signature header")
+                return jsonify({'error': 'Missing signature'}), 401
+            
+            # Verify HMAC signature
+            import hmac
+            import hashlib
+            
+            request_body = request.get_data()
+            expected_signature = hmac.new(
+                webhook_secret.encode('utf-8'),
+                request_body,
+                hashlib.sha256
+            ).hexdigest()
+            
+            if not hmac.compare_digest(signature_header, expected_signature):
+                logging.warning("ELEVENLABS WEBHOOK: Invalid signature")
+                return jsonify({'error': 'Invalid signature'}), 401
+            
+            logging.info("ELEVENLABS WEBHOOK: Signature verified")
+        else:
+            logging.warning("ELEVENLABS WEBHOOK: No webhook secret configured - signature verification skipped")
+        
         # Get raw request data
         content_type = request.content_type or 'unknown'
         
@@ -1189,11 +1221,53 @@ def elevenlabs_post_call_webhook():
             try:
                 payload = request.get_json()
                 
-                # Pretty-print the JSON payload
+                # Voice Spike 001D-1: Extract application identity
+                logging.info("=" * 60)
+                logging.info("ELEVENLABS VOICE IDENTITY TEST")
+                logging.info("=" * 60)
+                
+                # Extract ElevenLabs conversation ID
+                conversation_id = payload.get('conversation_id') or payload.get('id')
+                logging.info(f"ElevenLabs conversation: {conversation_id}")
+                
+                # Extract application identity from custom metadata
+                # The exact location depends on ElevenLabs webhook payload structure
+                app_metadata = None
+                identity_recovered = False
+                
+                # Check common locations for custom metadata
+                if 'metadata' in payload:
+                    app_metadata = payload['metadata']
+                elif 'custom_llm_extra_body' in payload:
+                    app_metadata = payload['custom_llm_extra_body']
+                elif 'analysis' in payload and isinstance(payload['analysis'], dict):
+                    app_metadata = payload['analysis'].get('custom_llm_extra_body')
+                
+                if app_metadata:
+                    app_session_id = app_metadata.get('app_session_id')
+                    app_engagement_id = app_metadata.get('app_engagement_id')
+                    app_platform = app_metadata.get('app_platform')
+                    
+                    logging.info(f"Application session: {app_session_id}")
+                    logging.info(f"Application engagement: {app_engagement_id}")
+                    logging.info(f"Application platform: {app_platform}")
+                    
+                    if app_session_id and app_engagement_id:
+                        identity_recovered = True
+                        logging.info("Identity recovered: YES")
+                    else:
+                        logging.info("Identity recovered: PARTIAL (missing fields)")
+                else:
+                    logging.info("Application metadata: NOT FOUND")
+                    logging.info("Identity recovered: NO")
+                
+                logging.info("=" * 60)
+                
+                # Pretty-print the full JSON payload for inspection
                 import json
                 payload_str = json.dumps(payload, indent=2, default=str)
                 
-                logging.info("Payload (JSON):")
+                logging.info("Full Payload (JSON):")
                 logging.info(payload_str)
                 
             except Exception as json_error:
