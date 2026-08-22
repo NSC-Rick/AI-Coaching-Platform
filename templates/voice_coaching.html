@@ -264,12 +264,16 @@
                 hasSignedUrl: !!data.signed_url,
                 signedUrlLength: data.signed_url ? data.signed_url.length : 0
             });
+            console.log('[VOICE] Client name received:', data.client_name);
             
             updateStatus('Connecting to coach...', 'connecting');
             
             // Use locally bundled ElevenLabs client with comprehensive callbacks
             conversation = await startVoiceConversation({
                 signedUrl: data.signed_url,
+                dynamicVariables: {
+                    client_name: data.client_name
+                },
                 
                 onConnect: () => {
                     console.log('[VOICE] UI: Connection established');

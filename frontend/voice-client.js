@@ -21,6 +21,7 @@ import { Conversation } from '@elevenlabs/client';
 export async function startVoiceConversation(options) {
     const {
         signedUrl,
+        dynamicVariables,
         onConnect,
         onDisconnect,
         onError,
@@ -32,12 +33,14 @@ export async function startVoiceConversation(options) {
     console.log('[VOICE] Starting ElevenLabs conversation with official SDK v1.21.0');
     console.log('[VOICE] Signed URL present:', Boolean(signedUrl));
     console.log('[VOICE] Signed URL length:', signedUrl?.length);
+    console.log('[VOICE] Dynamic variables:', dynamicVariables);
 
     try {
         console.log('[VOICE] Calling Conversation.startSession');
         
         const conversation = await Conversation.startSession({
             signedUrl,
+            dynamicVariables,
             
             // Connection lifecycle callbacks
             onConnect: (data) => {

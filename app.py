@@ -751,7 +751,8 @@ def init_voice_session(engagement_id):
         response_data = {
             'session_id': session.id,
             'signed_url': signed_url_data['signed_url'],
-            'config': session_config
+            'config': session_config,
+            'client_name': engagement.client.first_name  # For ElevenLabs dynamicVariables
         }
         
         logging.info(f"Voice session {session.id} initialized for engagement {engagement_id}")
