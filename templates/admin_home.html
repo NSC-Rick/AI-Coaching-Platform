@@ -32,7 +32,7 @@
         <h3>Administration</h3>
         <div class="client-actions" style="display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem;">
             <a href="{{ url_for('admin_users') }}" class="btn btn-primary">Users</a>
-            <span class="btn btn-secondary" style="opacity: 0.6; cursor: default;">Assignments</span>
+            <a href="{{ url_for('admin_assignments') }}" class="btn btn-primary">Assignments</a>
             <span class="btn btn-secondary" style="opacity: 0.6; cursor: default;">Information Domains</span>
             <span class="btn btn-secondary" style="opacity: 0.6; cursor: default;">Pathways</span>
         </div>

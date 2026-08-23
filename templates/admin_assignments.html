@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Assignments - Admin{% endblock %}
+
+{% block content %}
+<div class="admin-portal">
+    <div class="welcome-section">
+        <h2>Assignments</h2>
+        <p class="subtitle">Manage client coaching relationships and pathway assignments.</p>
+    </div>
+
+    <div style="margin-bottom: 1rem;">
+        <a href="{{ url_for('admin_home') }}" class="btn btn-secondary">&larr; Admin Dashboard</a>
+    </div>
+
+    <div class="card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Client</th>
+                    <th>Advisor</th>
+                    <th>Pathway</th>
+                    <th>Stage</th>
+                    <th>Day</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in assignments %}
+                <tr>
+                    <td>
+                        {{ a.client_name }}
+                        {% if not a.client_active %}
+                        <span class="badge" style="background-color: #fee2e2; color: #991b1b;">Client Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {{ a.advisor_name }}
+                        {% if not a.advisor_active %}
+                        <span class="badge" style="background-color: #fee2e2; color: #991b1b;">Advisor Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ a.pathway_name }}</td>
+                    <td>{{ a.stage }}</td>
+                    <td>{{ a.day }}</td>
+                    <td><span class="badge status-active">{{ a.engagement.status|title }}</span></td>
+                    <td>
+                        <a href="{{ url_for('admin_assignment_detail', engagement_id=a.engagement.id) }}" class="btn btn-secondary">View</a>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% for u in unassigned %}
+                <tr>
+                    <td>{{ u.client_name }}</td>
+                    <td>&mdash;</td>
+                    <td>&mdash;</td>
+                    <td>&mdash;</td>
+                    <td>&mdash;</td>
+                    <td><span class="badge" style="background-color: #fef3c7; color: #92400e;">Unassigned</span></td>
+                    <td>
+                        <a href="{{ url_for('admin_assignment_new', client_id=u.client.id) }}" class="btn btn-primary">Create Assignment</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

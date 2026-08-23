@@ -1,7 +1,7 @@
 import os
 import logging
 import click
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from flask import Flask, render_template, redirect, url_for, request, flash, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from dotenv import load_dotenv
@@ -416,6 +416,220 @@ def admin_user_password(user_id):
             return redirect(url_for('admin_users'))
 
     return render_template('admin_user_password.html', user=user)
+
+
+@app.route('/admin/assignments')
+@require_role('ADMIN')
+def admin_assignments():
+    clients = Client.query.all()
+    assignments = []
+    unassigned = []
+    
+    for client in clients:
+        engagement = Engagement.query.filter_by(client_id=client.id, status='active').first()
+        if engagement:
+            advisor = engagement.advisor
+            try:
+                pathway_data = load_pathway(engagement.pathway_id)
+                pathway_name = pathway_data['manifest']['name']
+            except Exception:
+                pathway_name = engagement.pathway_id
+            
+            pathway_state = engagement.pathway_state
+            stage = pathway_state.current_stage_id if pathway_state else '—'
+            day = pathway_state.current_day if pathway_state else '—'
+            
+            advisor_name = f'{advisor.first_name} {advisor.last_name}' if advisor else '—'
+            client_active = client.user.active
+            advisor_active = advisor.user.active if advisor and advisor.user else True
+            
+            assignments.append({
+                'client': client,
+                'client_name': f'{client.first_name} {client.last_name}',
+                'advisor_name': advisor_name,
+                'advisor_active': advisor_active,
+                'pathway_name': pathway_name,
+                'stage': stage,
+                'day': day,
+                'engagement': engagement,
+                'client_active': client_active
+            })
+        else:
+            unassigned.append({
+                'client': client,
+                'client_name': f'{client.first_name} {client.last_name}',
+                'client_active': client.user.active
+            })
+    
+    return render_template('admin_assignments.html', assignments=assignments, unassigned=unassigned)
+
+
+@app.route('/admin/assignments/<int:engagement_id>')
+@require_role('ADMIN')
+def admin_assignment_detail(engagement_id):
+    engagement = db.session.get(Engagement, engagement_id)
+    if not engagement:
+        flash('Engagement not found.', 'error')
+        return redirect(url_for('admin_assignments'))
+    
+    client = engagement.client
+    advisor = engagement.advisor
+    business = client.business if client else None
+    pathway_state = engagement.pathway_state
+    
+    try:
+        pathway_data = load_pathway(engagement.pathway_id)
+        pathway_name = pathway_data['manifest']['name']
+    except Exception:
+        pathway_name = engagement.pathway_id
+    
+    open_commitments = Commitment.query.filter_by(
+        engagement_id=engagement.id,
+        status='open'
+    ).count()
+    
+    current_risks = Risk.query.filter_by(
+        engagement_id=engagement.id,
+        status='open'
+    ).count()
+    
+    last_session = Session.query.filter_by(
+        engagement_id=engagement.id
+    ).order_by(Session.started_at.desc()).first()
+    
+    return render_template('admin_assignment_detail.html',
+                         engagement=engagement,
+                         client=client,
+                         advisor=advisor,
+                         business=business,
+                         pathway_state=pathway_state,
+                         pathway_name=pathway_name,
+                         open_commitments=open_commitments,
+                         current_risks=current_risks,
+                         last_session=last_session)
+
+
+@app.route('/admin/assignments/new/<int:client_id>', methods=['GET', 'POST'])
+@require_role('ADMIN')
+def admin_assignment_new(client_id):
+    client = db.session.get(Client, client_id)
+    if not client or client.user.role != 'CLIENT':
+        flash('Client not found.', 'error')
+        return redirect(url_for('admin_assignments'))
+    
+    existing = Engagement.query.filter_by(client_id=client.id, status='active').first()
+    if existing:
+        flash('Client already has an active engagement.', 'error')
+        return redirect(url_for('admin_assignments'))
+    
+    advisors = db.session.query(Advisor).join(User).filter(
+        User.role == 'ADVISOR',
+        User.active.is_(True)
+    ).all()
+    
+    try:
+        pathway_data = load_pathway('PATHWAY-001')
+        available_pathways = [{
+            'pathway_id': 'PATHWAY-001',
+            'name': pathway_data['manifest']['name']
+        }]
+        first_stage = pathway_data['manifest']['stages'][0]['stage_id']
+        default_duration = pathway_data['manifest'].get('default_duration_days', 90)
+        pathway_version = pathway_data['manifest'].get('version', '0.1')
+    except Exception as e:
+        flash('Could not load pathway configuration.', 'error')
+        logging.error(f'Pathway load failed: {str(e)}')
+        return redirect(url_for('admin_assignments'))
+    
+    if request.method == 'POST':
+        advisor_id = request.form.get('advisor_id', type=int)
+        pathway_id = request.form.get('pathway_id', '').strip()
+        
+        advisor = db.session.get(Advisor, advisor_id)
+        if not advisor or not advisor.user or advisor.user.role != 'ADVISOR' or not advisor.user.active:
+            flash('You must select an active advisor.', 'error')
+            return render_template('admin_assignment_new.html',
+                                 client=client,
+                                 advisors=advisors,
+                                 available_pathways=available_pathways)
+        
+        if pathway_id not in ['PATHWAY-001']:
+            flash('Invalid pathway selected.', 'error')
+            return render_template('admin_assignment_new.html',
+                                 client=client,
+                                 advisors=advisors,
+                                 available_pathways=available_pathways)
+        
+        try:
+            engagement = Engagement(
+                client_id=client.id,
+                advisor_id=advisor.id,
+                pathway_id=pathway_id,
+                pathway_version=pathway_version,
+                status='active',
+                start_date=date.today(),
+                target_end_date=date.today() + timedelta(days=default_duration)
+            )
+            db.session.add(engagement)
+            db.session.flush()
+            
+            pathway_state = PathwayState(
+                engagement_id=engagement.id,
+                current_stage_id=first_stage,
+                current_day=1
+            )
+            db.session.add(pathway_state)
+            db.session.commit()
+            
+            flash('Engagement created successfully.', 'success')
+            return redirect(url_for('admin_assignments'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Failed to create engagement.', 'error')
+            logging.error(f'Error creating engagement: {str(e)}')
+    
+    return render_template('admin_assignment_new.html',
+                         client=client,
+                         advisors=advisors,
+                         available_pathways=available_pathways)
+
+
+@app.route('/admin/assignments/<int:engagement_id>/advisor', methods=['GET', 'POST'])
+@require_role('ADMIN')
+def admin_assignment_advisor(engagement_id):
+    engagement = db.session.get(Engagement, engagement_id)
+    if not engagement:
+        flash('Engagement not found.', 'error')
+        return redirect(url_for('admin_assignments'))
+    
+    advisors = db.session.query(Advisor).join(User).filter(
+        User.role == 'ADVISOR',
+        User.active.is_(True)
+    ).all()
+    
+    if request.method == 'POST':
+        advisor_id = request.form.get('advisor_id', type=int)
+        advisor = db.session.get(Advisor, advisor_id)
+        
+        if not advisor or not advisor.user or advisor.user.role != 'ADVISOR' or not advisor.user.active:
+            flash('You must select an active advisor.', 'error')
+            return render_template('admin_assignment_advisor.html',
+                                 engagement=engagement,
+                                 advisors=advisors)
+        
+        try:
+            engagement.advisor_id = advisor.id
+            db.session.commit()
+            flash('Advisor updated successfully.', 'success')
+            return redirect(url_for('admin_assignments'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Failed to update advisor.', 'error')
+            logging.error(f'Error updating advisor: {str(e)}')
+    
+    return render_template('admin_assignment_advisor.html',
+                         engagement=engagement,
+                         advisors=advisors)
 
 
 @app.route('/advisor/client/<int:engagement_id>')

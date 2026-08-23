@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Change Advisor - Admin{% endblock %}
+
+{% block content %}
+<div class="admin-portal">
+    <div class="welcome-section">
+        <h2>Change Advisor</h2>
+        <p class="subtitle">Client: {{ engagement.client.first_name }} {{ engagement.client.last_name }}</p>
+    </div>
+
+    <div style="margin-bottom: 1rem;">
+        <a href="{{ url_for('admin_assignments') }}" class="btn btn-secondary">&larr; Assignments</a>
+        <a href="{{ url_for('admin_assignment_detail', engagement_id=engagement.id) }}" class="btn btn-secondary">View Engagement</a>
+    </div>
+
+    <div class="card">
+        <div class="info-row">
+            <span class="label">Current Advisor:</span>
+            <span class="value">{{ engagement.advisor.first_name }} {{ engagement.advisor.last_name }}</span>
+        </div>
+
+        <form method="POST" style="margin-top: 1rem;">
+            <div class="form-group">
+                <label for="advisor_id">New Advisor</label>
+                <select id="advisor_id" name="advisor_id" required>
+                    {% for a in advisors %}
+                    <option value="{{ a.id }}">{{ a.first_name }} {{ a.last_name }} ({{ a.user.email }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Update Advisor</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

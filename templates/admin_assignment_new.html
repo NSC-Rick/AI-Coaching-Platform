@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Create Assignment - Admin{% endblock %}
+
+{% block content %}
+<div class="admin-portal">
+    <div class="welcome-section">
+        <h2>Create Assignment</h2>
+        <p class="subtitle">Client: {{ client.first_name }} {{ client.last_name }}</p>
+    </div>
+
+    <div style="margin-bottom: 1rem;">
+        <a href="{{ url_for('admin_assignments') }}" class="btn btn-secondary">&larr; Assignments</a>
+    </div>
+
+    <div class="card">
+        <form method="POST">
+            <div class="form-group">
+                <label for="advisor_id">Advisor</label>
+                <select id="advisor_id" name="advisor_id" required>
+                    {% for a in advisors %}
+                    <option value="{{ a.id }}">{{ a.first_name }} {{ a.last_name }} ({{ a.user.email }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="pathway_id">Pathway</label>
+                <select id="pathway_id" name="pathway_id" required>
+                    {% for p in available_pathways %}
+                    <option value="{{ p.pathway_id }}">{{ p.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Create Assignment</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

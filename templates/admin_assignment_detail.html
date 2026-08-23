@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Assignment - Admin{% endblock %}
+
+{% block content %}
+<div class="admin-portal">
+    <div class="welcome-section">
+        <h2>{{ client.first_name }} {{ client.last_name }}</h2>
+        <p class="subtitle">Engagement Detail</p>
+    </div>
+
+    <div style="margin-bottom: 1rem;">
+        <a href="{{ url_for('admin_assignments') }}" class="btn btn-secondary">&larr; Assignments</a>
+        <a href="{{ url_for('admin_assignment_advisor', engagement_id=engagement.id) }}" class="btn btn-secondary">Change Advisor</a>
+    </div>
+
+    <div class="card">
+        <div class="info-row">
+            <span class="label">Client:</span>
+            <span class="value">{{ client.first_name }} {{ client.last_name }}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Client Status:</span>
+            <span class="value">{% if client.user.active %}Active{% else %}Inactive{% endif %}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Advisor:</span>
+            <span class="value">{{ advisor.first_name }} {{ advisor.last_name }}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Advisor Status:</span>
+            <span class="value">{% if advisor.user.active %}Active{% else %}Inactive{% endif %}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Pathway:</span>
+            <span class="value">{{ pathway_name }}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Status:</span>
+            <span class="value">{{ engagement.status|title }}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Stage:</span>
+            <span class="value">{{ pathway_state.current_stage_id if pathway_state else '&mdash;'|safe }}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Day:</span>
+            <span class="value">{{ pathway_state.current_day if pathway_state else '&mdash;'|safe }}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Start Date:</span>
+            <span class="value">{{ engagement.start_date }}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Target End Date:</span>
+            <span class="value">{{ engagement.target_end_date }}</span>
+        </div>
+        {% if business %}
+        <div class="info-row">
+            <span class="label">Business:</span>
+            <span class="value">{{ business.business_name }}</span>
+        </div>
+        {% endif %}
+
+        <div class="focus-section">
+            <h4>Context</h4>
+            <p><strong>Open Commitments:</strong> {{ open_commitments }}</p>
+            <p><strong>Current Risks:</strong> {{ current_risks }}</p>
+            <p><strong>Last Session:</strong> {% if last_session %}{{ last_session.started_at }}{% else %}&mdash;{% endif %}</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
