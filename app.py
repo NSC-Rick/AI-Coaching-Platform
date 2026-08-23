@@ -1678,6 +1678,16 @@ def bootstrap_admin():
             logging.error(f'ADMIN BOOTSTRAP: failed to create admin: {str(e)}')
 
 
+def ensure_database_schema():
+    """Create any missing database tables. Idempotent; does not drop or modify existing tables."""
+    try:
+        with app.app_context():
+            db.create_all()
+            logging.info('[STARTUP] Database schema verified.')
+    except Exception as e:
+        logging.error(f'[STARTUP] Database schema verification failed: {str(e)}')
+
+
 # Process any pending sessions on startup (recovery mechanism)
 # Flask 3.x compatible: Call directly after app initialization
 def process_pending_sessions_on_startup():
@@ -1858,6 +1868,11 @@ def elevenlabs_post_call_webhook():
 # This executes during module import, which happens once per worker
 if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
     # Not in Flask development reloader child process
+    try:
+        ensure_database_schema()
+    except Exception as e:
+        logging.error(f"[STARTUP] Failed to ensure database schema: {str(e)}")
+    
     try:
         process_pending_sessions_on_startup()
     except Exception as e:
