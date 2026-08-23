@@ -1,5 +1,6 @@
 import os
 import logging
+import click
 from datetime import datetime, timedelta
 from flask import Flask, render_template, redirect, url_for, request, flash, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
@@ -66,6 +67,8 @@ def index():
             return redirect(url_for('client_home'))
         elif current_user.role == 'ADVISOR':
             return redirect(url_for('advisor_home'))
+        elif current_user.role == 'ADMIN':
+            return redirect(url_for('admin_home'))
     return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -225,6 +228,22 @@ def advisor_home():
     return render_template('advisor_home.html',
                          advisor=advisor,
                          client_data=client_data)
+
+
+@app.route('/admin/home')
+@require_role('ADMIN')
+def admin_home():
+    total_users = User.query.count()
+    active_clients = Client.query.join(User).filter(User.active.is_(True)).count()
+    active_advisors = Advisor.query.join(User).filter(User.active.is_(True)).count()
+    active_engagements = Engagement.query.filter_by(status='active').count()
+    
+    return render_template('admin_home.html',
+                         total_users=total_users,
+                         active_clients=active_clients,
+                         active_advisors=active_advisors,
+                         active_engagements=active_engagements)
+
 
 @app.route('/advisor/client/<int:engagement_id>')
 @require_role('ADVISOR')
@@ -1135,6 +1154,53 @@ def seed_data():
     print('  Password: client123')
     print('=' * 50)
 
+@app.cli.command('create-admin')
+def create_admin():
+    """Create the first admin user from ADMIN_EMAIL and ADMIN_PASSWORD env vars."""
+    email = os.environ.get('ADMIN_EMAIL')
+    password = os.environ.get('ADMIN_PASSWORD')
+    
+    if not email or not password:
+        raise click.ClickException('ERROR: ADMIN_EMAIL and ADMIN_PASSWORD environment variables are required.')
+    
+    existing = User.query.filter_by(email=email).first()
+    if existing:
+        raise click.ClickException(f'ERROR: User {email} already exists (role={existing.role}).')
+    
+    admin_user = User(email=email, role='ADMIN', active=True)
+    admin_user.set_password(password)
+    db.session.add(admin_user)
+    db.session.commit()
+    print(f'Admin user created: {email}')
+    print('Change the default password immediately.')
+
+
+def bootstrap_admin():
+    """Create the initial admin user from ADMIN_EMAIL and ADMIN_PASSWORD at startup."""
+    email = os.environ.get('ADMIN_EMAIL')
+    password = os.environ.get('ADMIN_PASSWORD')
+    
+    if not email or not password:
+        logging.info('ADMIN BOOTSTRAP: credentials not configured; skipping')
+        return
+    
+    with app.app_context():
+        try:
+            existing = User.query.filter_by(email=email).first()
+            if existing:
+                logging.info(f'ADMIN BOOTSTRAP: User already exists; skipping: {email}')
+                return
+            
+            admin_user = User(email=email, role='ADMIN', active=True)
+            admin_user.set_password(password)
+            db.session.add(admin_user)
+            db.session.commit()
+            logging.info(f'ADMIN BOOTSTRAP: Admin user created: {email}')
+        except Exception as e:
+            db.session.rollback()
+            logging.error(f'ADMIN BOOTSTRAP: failed to create admin: {str(e)}')
+
+
 # Process any pending sessions on startup (recovery mechanism)
 # Flask 3.x compatible: Call directly after app initialization
 def process_pending_sessions_on_startup():
@@ -1319,6 +1385,11 @@ if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
         process_pending_sessions_on_startup()
     except Exception as e:
         logging.error(f"[STARTUP] Failed to process pending sessions: {str(e)}")
+    
+    try:
+        bootstrap_admin()
+    except Exception as e:
+        logging.error(f"[STARTUP] Failed to bootstrap admin: {str(e)}")
 
 if __name__ == '__main__':
     app.run(debug=True)

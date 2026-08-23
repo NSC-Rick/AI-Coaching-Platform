@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - AI Coaching Platform{% endblock %}
+
+{% block content %}
+<div class="admin-portal">
+    <div class="welcome-section">
+        <h2>Admin Dashboard</h2>
+        <p class="subtitle">Platform Administration</p>
+    </div>
+
+    <div class="status-grid">
+        <div class="card status-item">
+            <span class="label">Users</span>
+            <span class="value">{{ total_users }}</span>
+        </div>
+        <div class="card status-item">
+            <span class="label">Active Clients</span>
+            <span class="value">{{ active_clients }}</span>
+        </div>
+        <div class="card status-item">
+            <span class="label">Active Advisors</span>
+            <span class="value">{{ active_advisors }}</span>
+        </div>
+        <div class="card status-item">
+            <span class="label">Active Engagements</span>
+            <span class="value">{{ active_engagements }}</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Administration</h3>
+        <div class="client-actions" style="display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem;">
+            <span class="btn btn-secondary" style="opacity: 0.6; cursor: default;">Users</span>
+            <span class="btn btn-secondary" style="opacity: 0.6; cursor: default;">Assignments</span>
+            <span class="btn btn-secondary" style="opacity: 0.6; cursor: default;">Information Domains</span>
+            <span class="btn btn-secondary" style="opacity: 0.6; cursor: default;">Pathways</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
