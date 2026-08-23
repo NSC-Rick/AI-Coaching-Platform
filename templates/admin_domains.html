@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Information Domains - Admin{% endblock %}
+
+{% block content %}
+<div class="admin-portal">
+    <div class="welcome-section">
+        <h2>Information Domains</h2>
+        <p class="subtitle">Manage coaching knowledge containers.</p>
+    </div>
+
+    <div style="margin-bottom: 1rem;">
+        <a href="{{ url_for('admin_home') }}" class="btn btn-secondary">&larr; Admin Dashboard</a>
+        <a href="{{ url_for('admin_domain_new') }}" class="btn btn-primary">+ Add Domain</a>
+    </div>
+
+    <div class="card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in domains %}
+                <tr>
+                    <td>{{ d.name }}</td>
+                    <td>{{ d.description or '&mdash;'|safe }}</td>
+                    <td>
+                        {% if d.status == 'active' %}
+                        <span class="badge status-active">Active</span>
+                        {% elif d.status == 'draft' %}
+                        <span class="badge" style="background-color: #fef3c7; color: #92400e;">Draft</span>
+                        {% else %}
+                        <span class="badge" style="background-color: #e2e8f0; color: #475569;">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('admin_domain_edit', domain_id=d.id) }}" class="btn btn-secondary">Edit</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="no-data">No information domains defined.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

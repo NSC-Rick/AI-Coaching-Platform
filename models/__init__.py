@@ -1,4 +1,4 @@
-from .models import db, User, Advisor, Client, Business, Engagement, PathwayState, Commitment, Risk, SignificantEvent, LearningRecord, CoachingObservation, Session, AdvisorGuidance, AdvisorAttention, SessionMessage
+from .models import db, User, Advisor, Client, Business, Engagement, PathwayState, Commitment, Risk, SignificantEvent, LearningRecord, CoachingObservation, Session, AdvisorGuidance, AdvisorAttention, SessionMessage, InformationDomain
 
 __all__ = [
     'db',
@@ -16,5 +16,6 @@ __all__ = [
     'Session',
     'AdvisorGuidance',
     'AdvisorAttention',
-    'SessionMessage'
+    'SessionMessage',
+    'InformationDomain'
 ]

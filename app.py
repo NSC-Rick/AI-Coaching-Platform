@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, date
 from flask import Flask, render_template, redirect, url_for, request, flash, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from dotenv import load_dotenv
-from models import db, User, Advisor, Client, Business, Engagement, PathwayState, Commitment, Risk, SignificantEvent, LearningRecord, CoachingObservation, Session, AdvisorGuidance, AdvisorAttention, SessionMessage
+from models import db, User, Advisor, Client, Business, Engagement, PathwayState, Commitment, Risk, SignificantEvent, LearningRecord, CoachingObservation, Session, AdvisorGuidance, AdvisorAttention, SessionMessage, InformationDomain
 from coaching.ai_service import AIService, AIServiceError
 from coaching.context import build_coaching_context, format_context_for_display
 from coaching.engine import load_pathway
@@ -630,6 +630,96 @@ def admin_assignment_advisor(engagement_id):
     return render_template('admin_assignment_advisor.html',
                          engagement=engagement,
                          advisors=advisors)
+
+
+@app.route('/admin/domains')
+@require_role('ADMIN')
+def admin_domains():
+    domains = InformationDomain.query.order_by(InformationDomain.name).all()
+    return render_template('admin_domains.html', domains=domains)
+
+
+@app.route('/admin/domains/new', methods=['GET', 'POST'])
+@require_role('ADMIN')
+def admin_domain_new():
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        description = request.form.get('description', '').strip()
+        status = request.form.get('status', 'draft')
+        
+        if not name:
+            flash('Domain name is required.', 'error')
+            return render_template('admin_domain_form.html', domain=None)
+        
+        if status not in ('draft', 'active', 'inactive'):
+            flash('Invalid status.', 'error')
+            return render_template('admin_domain_form.html', domain=None)
+        
+        existing = InformationDomain.query.filter_by(name=name).first()
+        if existing:
+            flash('A domain with that name already exists.', 'error')
+            return render_template('admin_domain_form.html', domain=None)
+        
+        try:
+            domain = InformationDomain(
+                name=name,
+                description=description,
+                status=status
+            )
+            db.session.add(domain)
+            db.session.commit()
+            flash('Information Domain created.', 'success')
+            return redirect(url_for('admin_domains'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Failed to create domain.', 'error')
+            logging.error(f'Error creating domain: {str(e)}')
+    
+    return render_template('admin_domain_form.html', domain=None)
+
+
+@app.route('/admin/domains/<int:domain_id>/edit', methods=['GET', 'POST'])
+@require_role('ADMIN')
+def admin_domain_edit(domain_id):
+    domain = db.session.get(InformationDomain, domain_id)
+    if not domain:
+        flash('Domain not found.', 'error')
+        return redirect(url_for('admin_domains'))
+    
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        description = request.form.get('description', '').strip()
+        status = request.form.get('status', 'draft')
+        
+        if not name:
+            flash('Domain name is required.', 'error')
+            return render_template('admin_domain_form.html', domain=domain)
+        
+        if status not in ('draft', 'active', 'inactive'):
+            flash('Invalid status.', 'error')
+            return render_template('admin_domain_form.html', domain=domain)
+        
+        existing = InformationDomain.query.filter(
+            InformationDomain.name == name,
+            InformationDomain.id != domain.id
+        ).first()
+        if existing:
+            flash('A domain with that name already exists.', 'error')
+            return render_template('admin_domain_form.html', domain=domain)
+        
+        try:
+            domain.name = name
+            domain.description = description
+            domain.status = status
+            db.session.commit()
+            flash('Information Domain updated.', 'success')
+            return redirect(url_for('admin_domains'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Failed to update domain.', 'error')
+            logging.error(f'Error updating domain: {str(e)}')
+    
+    return render_template('admin_domain_form.html', domain=domain)
 
 
 @app.route('/advisor/client/<int:engagement_id>')

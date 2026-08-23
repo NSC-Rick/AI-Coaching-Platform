@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}{% if domain %}Edit{% else %}Add{% endif %} Information Domain - Admin{% endblock %}
+
+{% block content %}
+<div class="admin-portal">
+    <div class="welcome-section">
+        <h2>{% if domain %}Edit{% else %}Add{% endif %} Information Domain</h2>
+    </div>
+
+    <div style="margin-bottom: 1rem;">
+        <a href="{{ url_for('admin_domains') }}" class="btn btn-secondary">&larr; Domains</a>
+    </div>
+
+    <div class="card">
+        <form method="POST">
+            <div class="form-group">
+                <label for="name">Name</label>
+                <input type="text" id="name" name="name" value="{{ domain.name if domain else '' }}" required>
+            </div>
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" rows="4">{{ domain.description if domain else '' }}</textarea>
+            </div>
+            <div class="form-group">
+                <label for="status">Status</label>
+                <select id="status" name="status" required>
+                    <option value="draft" {% if domain and domain.status == 'draft' %}selected{% endif %}>Draft</option>
+                    <option value="active" {% if domain and domain.status == 'active' %}selected{% endif %}>Active</option>
+                    <option value="inactive" {% if domain and domain.status == 'inactive' %}selected{% endif %}>Inactive</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">{% if domain %}Update{% else %}Create{% endif %} Domain</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
