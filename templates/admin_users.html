@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Users - Admin{% endblock %}
+
+{% block content %}
+<div class="admin-portal">
+    <div class="welcome-section">
+        <h2>Users</h2>
+        <p class="subtitle">Manage platform access for clients and advisors.</p>
+    </div>
+
+    <div style="display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap;">
+        <a href="{{ url_for('admin_home') }}" class="btn btn-secondary">&larr; Admin Dashboard</a>
+        <a href="{{ url_for('admin_user_new') }}" class="btn btn-primary">+ Add User</a>
+    </div>
+
+    <div class="card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Profile</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in user_data %}
+                <tr>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.user.email }}</td>
+                    <td>
+                        {% if item.user.role == 'CLIENT' %}Client
+                        {% elif item.user.role == 'ADVISOR' %}Advisor
+                        {% else %}Administrator{% endif %}
+                    </td>
+                    <td>
+                        {% if item.user.active %}
+                        <span class="badge status-active">Active</span>
+                        {% else %}
+                        <span class="badge" style="background-color: #e2e8f0; color: #475569;">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ item.profile_type }}</td>
+                    <td>
+                        <a href="{{ url_for('admin_user_detail', user_id=item.user.id) }}" class="btn btn-secondary">View</a>
+                        <a href="{{ url_for('admin_user_password', user_id=item.user.id) }}" class="btn btn-secondary">Reset Password</a>
+                        {% if item.user.role != 'ADMIN' and item.user.id != current_user.id %}
+                            {% if item.user.active %}
+                            <form method="POST" action="{{ url_for('admin_user_deactivate', user_id=item.user.id) }}" style="display:inline;">
+                                <button type="submit" class="btn" style="background-color: var(--danger-color); color: white;">Deactivate</button>
+                            </form>
+                            {% else %}
+                            <form method="POST" action="{{ url_for('admin_user_activate', user_id=item.user.id) }}" style="display:inline;">
+                                <button type="submit" class="btn" style="background-color: var(--success-color); color: white;">Activate</button>
+                            </form>
+                            {% endif %}
+                        {% else %}
+                        &mdash;
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

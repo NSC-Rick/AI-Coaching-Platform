@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}{{ detail.name }} - Admin{% endblock %}
+
+{% block content %}
+<div class="admin-portal">
+    <div class="welcome-section">
+        <h2>{{ detail.name }}</h2>
+        <p class="subtitle">{{ detail.profile_type }}</p>
+    </div>
+
+    <div style="margin-bottom: 1rem;">
+        <a href="{{ url_for('admin_users') }}" class="btn btn-secondary">&larr; Users</a>
+        <a href="{{ url_for('admin_user_password', user_id=user.id) }}" class="btn btn-secondary">Reset Password</a>
+    </div>
+
+    <div class="card">
+        <div class="info-row">
+            <span class="label">Email:</span>
+            <span class="value">{{ user.email }}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Role:</span>
+            <span class="value">
+                {% if user.role == 'CLIENT' %}Client
+                {% elif user.role == 'ADVISOR' %}Advisor
+                {% else %}Administrator{% endif %}
+            </span>
+        </div>
+        <div class="info-row">
+            <span class="label">Status:</span>
+            <span class="value">{% if user.active %}Active{% else %}Inactive{% endif %}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Created:</span>
+            <span class="value">{{ user.created_at.strftime('%Y-%m-%d') }}</span>
+        </div>
+        {% if user.role == 'CLIENT' %}
+        <div class="focus-section">
+            <h4>Client Information</h4>
+            <p><strong>Business:</strong> {{ detail.extra.business.business_name if detail.extra.business else '&mdash;'|safe }}</p>
+            {% if detail.extra.engagement %}
+            <p><strong>Engagement Status:</strong> {{ detail.extra.engagement.status }}</p>
+            <p><strong>Pathway:</strong> {{ detail.extra.engagement.pathway_id }}</p>
+            {% else %}
+            <p>No active engagement.</p>
+            {% endif %}
+        </div>
+        {% elif user.role == 'ADVISOR' %}
+        <div class="focus-section">
+            <h4>Advisor Information</h4>
+            <p><strong>Assigned Engagements:</strong> {{ detail.extra.engagement_count }}</p>
+            <p><strong>Active Engagements:</strong> {{ detail.extra.active_count }}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

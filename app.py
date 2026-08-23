@@ -245,6 +245,179 @@ def admin_home():
                          active_engagements=active_engagements)
 
 
+@app.route('/admin/users')
+@require_role('ADMIN')
+def admin_users():
+    users = User.query.all()
+    user_data = []
+    for u in users:
+        name = u.email
+        profile_type = 'Administrator'
+        if u.client:
+            name = f'{u.client.first_name} {u.client.last_name}'
+            profile_type = 'Client'
+        elif u.advisor:
+            name = f'{u.advisor.first_name} {u.advisor.last_name}'
+            profile_type = 'Advisor'
+        user_data.append({
+            'user': u,
+            'name': name,
+            'profile_type': profile_type
+        })
+    return render_template('admin_users.html', user_data=user_data)
+
+
+@app.route('/admin/users/new', methods=['GET', 'POST'])
+@require_role('ADMIN')
+def admin_user_new():
+    if request.method == 'POST':
+        role = request.form.get('role', '').upper()
+        first_name = request.form.get('first_name', '').strip()
+        last_name = request.form.get('last_name', '').strip()
+        email = request.form.get('email', '').strip()
+        password = request.form.get('password', '')
+
+        if role not in ('CLIENT', 'ADVISOR'):
+            flash('Role must be Client or Advisor.', 'error')
+            return render_template('admin_user_new.html')
+
+        if not first_name or not last_name or not email or not password:
+            flash('All fields are required.', 'error')
+            return render_template('admin_user_new.html')
+
+        existing = User.query.filter_by(email=email).first()
+        if existing:
+            flash('A user with that email already exists.', 'error')
+            return render_template('admin_user_new.html')
+
+        if len(password) < 8:
+            flash('Temporary password must be at least 8 characters.', 'error')
+            return render_template('admin_user_new.html')
+
+        try:
+            user = User(email=email, role=role, active=True)
+            user.set_password(password)
+            db.session.add(user)
+            db.session.flush()
+
+            if role == 'CLIENT':
+                profile = Client(user_id=user.id, first_name=first_name, last_name=last_name)
+            else:
+                profile = Advisor(user_id=user.id, first_name=first_name, last_name=last_name)
+
+            db.session.add(profile)
+            db.session.commit()
+            flash(f'{role.title()} user created successfully.', 'success')
+            return redirect(url_for('admin_users'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Failed to create user. Please try again.', 'error')
+            logging.error(f'Error creating user: {str(e)}')
+
+    return render_template('admin_user_new.html')
+
+
+@app.route('/admin/users/<int:user_id>')
+@require_role('ADMIN')
+def admin_user_detail(user_id):
+    user = db.session.get(User, user_id)
+    if not user:
+        flash('User not found.', 'error')
+        return redirect(url_for('admin_users'))
+
+    detail = {
+        'name': user.email,
+        'profile_type': 'Administrator',
+        'extra': {}
+    }
+
+    if user.client:
+        client = user.client
+        detail['name'] = f'{client.first_name} {client.last_name}'
+        detail['profile_type'] = 'Client'
+        business = client.business
+        engagement = Engagement.query.filter_by(client_id=client.id, status='active').first()
+        detail['extra'] = {
+            'business': business,
+            'engagement': engagement
+        }
+    elif user.advisor:
+        advisor = user.advisor
+        detail['name'] = f'{advisor.first_name} {advisor.last_name}'
+        detail['profile_type'] = 'Advisor'
+        engagements = Engagement.query.filter_by(advisor_id=advisor.id).all()
+        active_engagements = [e for e in engagements if e.status == 'active']
+        detail['extra'] = {
+            'engagement_count': len(engagements),
+            'active_count': len(active_engagements)
+        }
+
+    return render_template('admin_user_detail.html', user=user, detail=detail)
+
+
+@app.route('/admin/users/<int:user_id>/activate', methods=['POST'])
+@require_role('ADMIN')
+def admin_user_activate(user_id):
+    user = db.session.get(User, user_id)
+    if not user:
+        flash('User not found.', 'error')
+        return redirect(url_for('admin_users'))
+
+    if user.role == 'ADMIN' or user.id == current_user.id:
+        flash('Action not allowed.', 'error')
+        return redirect(url_for('admin_users'))
+
+    user.active = True
+    db.session.commit()
+    flash('User activated.', 'success')
+    return redirect(url_for('admin_users'))
+
+
+@app.route('/admin/users/<int:user_id>/deactivate', methods=['POST'])
+@require_role('ADMIN')
+def admin_user_deactivate(user_id):
+    user = db.session.get(User, user_id)
+    if not user:
+        flash('User not found.', 'error')
+        return redirect(url_for('admin_users'))
+
+    if user.role == 'ADMIN' or user.id == current_user.id:
+        flash('Action not allowed.', 'error')
+        return redirect(url_for('admin_users'))
+
+    user.active = False
+    db.session.commit()
+    flash('User deactivated.', 'success')
+    return redirect(url_for('admin_users'))
+
+
+@app.route('/admin/users/<int:user_id>/password', methods=['GET', 'POST'])
+@require_role('ADMIN')
+def admin_user_password(user_id):
+    user = db.session.get(User, user_id)
+    if not user:
+        flash('User not found.', 'error')
+        return redirect(url_for('admin_users'))
+
+    if request.method == 'POST':
+        password = request.form.get('password', '')
+        confirm = request.form.get('confirm_password', '')
+
+        if not password or not confirm:
+            flash('Both fields are required.', 'error')
+        elif password != confirm:
+            flash('Passwords do not match.', 'error')
+        elif len(password) < 8:
+            flash('Password must be at least 8 characters.', 'error')
+        else:
+            user.set_password(password)
+            db.session.commit()
+            flash('Temporary password updated.', 'success')
+            return redirect(url_for('admin_users'))
+
+    return render_template('admin_user_password.html', user=user)
+
+
 @app.route('/advisor/client/<int:engagement_id>')
 @require_role('ADVISOR')
 def client_detail(engagement_id):
