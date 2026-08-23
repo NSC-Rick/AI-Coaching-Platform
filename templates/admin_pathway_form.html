@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}{% if pathway %}Edit{% else %}Add{% endif %} Pathway - Admin{% endblock %}
+
+{% block content %}
+<div class="admin-portal">
+    <div class="welcome-section">
+        <h2>{% if pathway %}Edit{% else %}Add{% endif %} Pathway</h2>
+    </div>
+
+    <div style="margin-bottom: 1rem;">
+        <a href="{{ url_for('admin_pathways') }}" class="btn btn-secondary">&larr; Pathways</a>
+    </div>
+
+    <div class="card">
+        <form method="POST">
+            <div class="form-group">
+                <label for="pathway_id">Pathway ID</label>
+                {% if pathway %}
+                <input type="text" id="pathway_id" value="{{ pathway.pathway_id }}" disabled>
+                {% else %}
+                <input type="text" id="pathway_id" name="pathway_id" value="{{ pathway.pathway_id if pathway else '' }}" required>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label for="name">Name</label>
+                <input type="text" id="name" name="name" value="{{ pathway.name if pathway else '' }}" required>
+            </div>
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" rows="4">{{ pathway.description if pathway else '' }}</textarea>
+            </div>
+            <div class="form-group">
+                <label for="domain_id">Information Domain</label>
+                <select id="domain_id" name="domain_id" required>
+                    {% for d in domains %}
+                    <option value="{{ d.id }}" {% if pathway and pathway.domain_id == d.id %}selected{% endif %}>{{ d.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="package_slug">Package Slug</label>
+                <input type="text" id="package_slug" name="package_slug" value="{{ pathway.package_slug if pathway else '' }}">
+            </div>
+            <div class="form-group">
+                <label for="status">Status</label>
+                <select id="status" name="status" required>
+                    <option value="draft" {% if pathway and pathway.status == 'draft' %}selected{% endif %}>Draft</option>
+                    <option value="active" {% if pathway and pathway.status == 'active' %}selected{% endif %}>Active</option>
+                    <option value="inactive" {% if pathway and pathway.status == 'inactive' %}selected{% endif %}>Inactive</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">{% if pathway %}Update{% else %}Create{% endif %} Pathway</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

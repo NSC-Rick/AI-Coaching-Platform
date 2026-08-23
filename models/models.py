@@ -223,3 +223,19 @@ class InformationDomain(db.Model):
     status = db.Column(db.String(50), nullable=False, default='draft')
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
+class Pathway(db.Model):
+    __tablename__ = 'pathways'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    pathway_id = db.Column(db.String(100), unique=True, nullable=False)
+    name = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.Text)
+    status = db.Column(db.String(50), nullable=False, default='draft')
+    domain_id = db.Column(db.Integer, db.ForeignKey('information_domains.id'), nullable=False)
+    package_slug = db.Column(db.String(255))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
+    domain = db.relationship('InformationDomain', backref='pathways')

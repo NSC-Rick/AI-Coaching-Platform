@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, date
 from flask import Flask, render_template, redirect, url_for, request, flash, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from dotenv import load_dotenv
-from models import db, User, Advisor, Client, Business, Engagement, PathwayState, Commitment, Risk, SignificantEvent, LearningRecord, CoachingObservation, Session, AdvisorGuidance, AdvisorAttention, SessionMessage, InformationDomain
+from models import db, User, Advisor, Client, Business, Engagement, PathwayState, Commitment, Risk, SignificantEvent, LearningRecord, CoachingObservation, Session, AdvisorGuidance, AdvisorAttention, SessionMessage, InformationDomain, Pathway
 from coaching.ai_service import AIService, AIServiceError
 from coaching.context import build_coaching_context, format_context_for_display
 from coaching.engine import load_pathway
@@ -527,19 +527,10 @@ def admin_assignment_new(client_id):
         User.active.is_(True)
     ).all()
     
-    try:
-        pathway_data = load_pathway('PATHWAY-001')
-        available_pathways = [{
-            'pathway_id': 'PATHWAY-001',
-            'name': pathway_data['manifest']['name']
-        }]
-        first_stage = pathway_data['manifest']['stages'][0]['stage_id']
-        default_duration = pathway_data['manifest'].get('default_duration_days', 90)
-        pathway_version = pathway_data['manifest'].get('version', '0.1')
-    except Exception as e:
-        flash('Could not load pathway configuration.', 'error')
-        logging.error(f'Pathway load failed: {str(e)}')
-        return redirect(url_for('admin_assignments'))
+    available_pathways = db.session.query(Pathway).join(InformationDomain).filter(
+        Pathway.status == 'active',
+        InformationDomain.status == 'active'
+    ).order_by(Pathway.name).all()
     
     if request.method == 'POST':
         advisor_id = request.form.get('advisor_id', type=int)
@@ -553,8 +544,27 @@ def admin_assignment_new(client_id):
                                  advisors=advisors,
                                  available_pathways=available_pathways)
         
-        if pathway_id not in ['PATHWAY-001']:
+        pathway_record = db.session.query(Pathway).join(InformationDomain).filter(
+            Pathway.pathway_id == pathway_id,
+            Pathway.status == 'active',
+            InformationDomain.status == 'active'
+        ).first()
+        
+        if not pathway_record:
             flash('Invalid pathway selected.', 'error')
+            return render_template('admin_assignment_new.html',
+                                 client=client,
+                                 advisors=advisors,
+                                 available_pathways=available_pathways)
+        
+        try:
+            pathway_data = load_pathway(pathway_record.pathway_id)
+            first_stage = pathway_data['manifest']['stages'][0]['stage_id']
+            default_duration = pathway_data['manifest'].get('default_duration_days', 90)
+            pathway_version = pathway_data['manifest'].get('version', '0.1')
+        except Exception as e:
+            flash('Selected pathway could not be loaded by the coaching engine.', 'error')
+            logging.error(f'Pathway load failed for {pathway_id}: {str(e)}')
             return render_template('admin_assignment_new.html',
                                  client=client,
                                  advisors=advisors,
@@ -564,7 +574,7 @@ def admin_assignment_new(client_id):
             engagement = Engagement(
                 client_id=client.id,
                 advisor_id=advisor.id,
-                pathway_id=pathway_id,
+                pathway_id=pathway_record.pathway_id,
                 pathway_version=pathway_version,
                 status='active',
                 start_date=date.today(),
@@ -720,6 +730,112 @@ def admin_domain_edit(domain_id):
             logging.error(f'Error updating domain: {str(e)}')
     
     return render_template('admin_domain_form.html', domain=domain)
+
+
+@app.route('/admin/pathways')
+@require_role('ADMIN')
+def admin_pathways():
+    pathways = Pathway.query.order_by(Pathway.pathway_id).all()
+    return render_template('admin_pathways.html', pathways=pathways)
+
+
+@app.route('/admin/pathways/new', methods=['GET', 'POST'])
+@require_role('ADMIN')
+def admin_pathway_new():
+    active_domains = InformationDomain.query.filter_by(status='active').order_by(InformationDomain.name).all()
+    
+    if request.method == 'POST':
+        pathway_id = request.form.get('pathway_id', '').strip().upper()
+        name = request.form.get('name', '').strip()
+        description = request.form.get('description', '').strip()
+        domain_id = request.form.get('domain_id', type=int)
+        package_slug = request.form.get('package_slug', '').strip()
+        status = request.form.get('status', 'draft')
+        
+        if not pathway_id or not name or not domain_id:
+            flash('Pathway ID, Name, and Information Domain are required.', 'error')
+            return render_template('admin_pathway_form.html', pathway=None, domains=active_domains)
+        
+        if status not in ('draft', 'active', 'inactive'):
+            flash('Invalid status.', 'error')
+            return render_template('admin_pathway_form.html', pathway=None, domains=active_domains)
+        
+        domain = db.session.get(InformationDomain, domain_id)
+        if not domain or domain.status != 'active':
+            flash('You must select an active Information Domain.', 'error')
+            return render_template('admin_pathway_form.html', pathway=None, domains=active_domains)
+        
+        existing = Pathway.query.filter_by(pathway_id=pathway_id).first()
+        if existing:
+            flash('A Pathway with that ID already exists.', 'error')
+            return render_template('admin_pathway_form.html', pathway=None, domains=active_domains)
+        
+        try:
+            pathway = Pathway(
+                pathway_id=pathway_id,
+                name=name,
+                description=description,
+                domain_id=domain_id,
+                package_slug=package_slug,
+                status=status
+            )
+            db.session.add(pathway)
+            db.session.commit()
+            flash('Pathway created.', 'success')
+            return redirect(url_for('admin_pathways'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Failed to create Pathway.', 'error')
+            logging.error(f'Error creating pathway: {str(e)}')
+    
+    return render_template('admin_pathway_form.html', pathway=None, domains=active_domains)
+
+
+@app.route('/admin/pathways/<int:pathway_db_id>/edit', methods=['GET', 'POST'])
+@require_role('ADMIN')
+def admin_pathway_edit(pathway_db_id):
+    pathway = db.session.get(Pathway, pathway_db_id)
+    if not pathway:
+        flash('Pathway not found.', 'error')
+        return redirect(url_for('admin_pathways'))
+    
+    active_domains = InformationDomain.query.filter_by(status='active').order_by(InformationDomain.name).all()
+    
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        description = request.form.get('description', '').strip()
+        domain_id = request.form.get('domain_id', type=int)
+        package_slug = request.form.get('package_slug', '').strip()
+        status = request.form.get('status', 'draft')
+        
+        if not name or not domain_id:
+            flash('Name and Information Domain are required.', 'error')
+            return render_template('admin_pathway_form.html', pathway=pathway, domains=active_domains)
+        
+        if status not in ('draft', 'active', 'inactive'):
+            flash('Invalid status.', 'error')
+            return render_template('admin_pathway_form.html', pathway=pathway, domains=active_domains)
+        
+        domain = db.session.get(InformationDomain, domain_id)
+        if not domain or domain.status != 'active':
+            flash('You must select an active Information Domain.', 'error')
+            return render_template('admin_pathway_form.html', pathway=pathway, domains=active_domains)
+        
+        try:
+            pathway.name = name
+            pathway.description = description
+            pathway.domain_id = domain_id
+            pathway.package_slug = package_slug
+            pathway.status = status
+            db.session.commit()
+            flash('Pathway updated.', 'success')
+            return redirect(url_for('admin_pathways'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Failed to update Pathway.', 'error')
+            logging.error(f'Error updating pathway: {str(e)}')
+    
+    return render_template('admin_pathway_form.html', pathway=pathway, domains=active_domains)
 
 
 @app.route('/advisor/client/<int:engagement_id>')

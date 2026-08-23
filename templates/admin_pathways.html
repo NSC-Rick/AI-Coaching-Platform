@@ -1,57 +1,59 @@
 {% extends "base.html" %}
 
-{% block title %}Information Domains - Admin{% endblock %}
+{% block title %}Pathways - Admin{% endblock %}
 
 {% block content %}
 <div class="admin-portal">
     <div class="welcome-section">
-        <h2>Information Domains</h2>
-        <p class="subtitle">Manage coaching knowledge containers.</p>
+        <h2>Pathways</h2>
+        <p class="subtitle">Manage pathway catalog and runtime associations.</p>
     </div>
 
     <div style="margin-bottom: 1rem;">
         <a href="{{ url_for('admin_home') }}" class="btn btn-secondary">&larr; Admin Dashboard</a>
-        <a href="{{ url_for('admin_domain_new') }}" class="btn btn-primary">+ Add Domain</a>
+        <a href="{{ url_for('admin_pathway_new') }}" class="btn btn-primary">+ Add Pathway</a>
     </div>
 
     <div class="card">
         <table class="data-table">
             <thead>
                 <tr>
+                    <th>Pathway ID</th>
                     <th>Name</th>
-                    <th>Description</th>
-                    <th>Pathways</th>
+                    <th>Information Domain</th>
+                    <th>Package</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
-                {% for d in domains %}
+                {% for p in pathways %}
                 <tr>
-                    <td>{{ d.name }}</td>
-                    <td>{{ d.description or '&mdash;'|safe }}</td>
+                    <td>{{ p.pathway_id }}</td>
+                    <td>{{ p.name }}</td>
                     <td>
-                        {{ d.pathways|length }} Pathway{{ 's' if d.pathways|length != 1 else '' }}
-                        {% if d.pathways %}
-                        <br><small>{{ d.pathways|map(attribute='name')|join(', ') }}</small>
+                        {{ p.domain.name }}
+                        {% if p.domain.status != 'active' %}
+                        <span class="badge" style="background-color: #fee2e2; color: #991b1b;">Domain Inactive</span>
                         {% endif %}
                     </td>
+                    <td>{{ p.package_slug or '&mdash;'|safe }}</td>
                     <td>
-                        {% if d.status == 'active' %}
+                        {% if p.status == 'active' %}
                         <span class="badge status-active">Active</span>
-                        {% elif d.status == 'draft' %}
+                        {% elif p.status == 'draft' %}
                         <span class="badge" style="background-color: #fef3c7; color: #92400e;">Draft</span>
                         {% else %}
                         <span class="badge" style="background-color: #e2e8f0; color: #475569;">Inactive</span>
                         {% endif %}
                     </td>
                     <td>
-                        <a href="{{ url_for('admin_domain_edit', domain_id=d.id) }}" class="btn btn-secondary">Edit</a>
+                        <a href="{{ url_for('admin_pathway_edit', pathway_db_id=p.id) }}" class="btn btn-secondary">Edit</a>
                     </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="4" class="no-data">No information domains defined.</td>
+                    <td colspan="6" class="no-data">No pathways defined.</td>
                 </tr>
                 {% endfor %}
             </tbody>
