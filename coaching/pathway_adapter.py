@@ -31,7 +31,8 @@ class PathwayAdapter:
     @classmethod
     def for_pathway(cls, pathway_id, current_stage_id=None, current_day=None):
         """
-        Build a normalized runtime context for a pathway.
+        Build a normalized runtime context for a pathway by loading the
+        package first.
 
         Args:
             pathway_id: The package identifier (e.g. 'PATHWAY-001').
@@ -50,6 +51,16 @@ class PathwayAdapter:
         except PathwayLoadError as e:
             raise PathwayAdapterError(str(e)) from e
 
+        return cls.from_package(package, current_stage_id, current_day)
+
+    @classmethod
+    def from_package(cls, package, current_stage_id=None, current_day=None):
+        """
+        Build a normalized runtime context from an already loaded package.
+
+        This avoids re-loading the package when the caller already holds
+        the load_pathway() result.
+        """
         manifest = package.get('manifest', {})
 
         runtime = {
@@ -68,7 +79,7 @@ class PathwayAdapter:
             'resources': cls._normalize_resources(package)
         }
 
-        if current_day is not None:
+        if current_day is not None and runtime['current_stage']:
             runtime['current_stage']['current_day'] = current_day
 
         return runtime

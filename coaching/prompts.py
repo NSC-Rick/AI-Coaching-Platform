@@ -3,6 +3,9 @@ Coaching prompt construction for the AI Coaching Platform.
 Maintains separation between platform-level coaching instructions and pathway-specific content.
 """
 
+from .pathway_adapter import PathwayAdapter
+
+
 def build_coaching_system_prompt(context: dict, pathway_data: dict) -> str:
     """
     Build the system prompt for the AI coach.
@@ -24,6 +27,14 @@ def build_coaching_system_prompt(context: dict, pathway_data: dict) -> str:
     current_priorities = context['current_state'].get('current_priorities', '')
     
     prompt_parts = []
+    
+    current_stage_id = context['current_state'].get('stage_id')
+    current_day = context['current_state'].get('current_day')
+    runtime_context = PathwayAdapter.from_package(
+        pathway_data,
+        current_stage_id=current_stage_id,
+        current_day=current_day
+    )
     
     prompt_parts.append(f"""You are an AI coaching assistant supporting {client_name}, who owns {business_name}.
 
@@ -115,40 +126,29 @@ ACTIVE ADVISOR GUIDANCE (HIGH PRIORITY):
 
 You must respect and emphasize this advisor direction in your coaching.""")
     
-    if pathway_data.get('coaching_guidance'):
-        stage_id = context['current_state'].get('stage_id')
-        guidance_text = pathway_data['coaching_guidance']
-        
-        if stage_id and stage_id in guidance_text:
-            relevant_section = extract_stage_guidance(guidance_text, stage_id)
-            if relevant_section:
-                prompt_parts.append(f"\n\nPATHWAY-SPECIFIC COACHING GUIDANCE:\n{relevant_section}")
+    if runtime_context['coaching']['stage_guidance']:
+        prompt_parts.append(f"\n\nPATHWAY-SPECIFIC COACHING GUIDANCE:\n{runtime_context['coaching']['stage_guidance']}")
     
-    manifest = pathway_data.get('manifest', {})
-    current_stage_id = context['current_state'].get('stage_id')
-    
-    if current_stage_id:
-        for stage in manifest.get('stages', []):
-            if stage.get('stage_id') == current_stage_id:
-                prompt_parts.append(f"""
+    if runtime_context['current_stage']:
+        stage = runtime_context['current_stage']
+        prompt_parts.append(f"""
 
 CURRENT STAGE OBJECTIVES:
 {stage.get('purpose', '')}
 
 Key Objectives:""")
-                for obj in stage.get('objectives', []):
-                    prompt_parts.append(f"- {obj}")
-                break
+        for obj in stage.get('objectives', []):
+            prompt_parts.append(f"- {obj}")
     
-    if pathway_data.get('guardrails'):
+    if runtime_context['coaching']['guardrails']:
         prompt_parts.append(f"""
 
 PATHWAY GUARDRAILS:
-{extract_guardrail_summary(pathway_data['guardrails'])}
+{extract_guardrail_summary(runtime_context['coaching']['guardrails'])}
 
 These are critical boundaries. If the client proposes actions that may violate these guardrails, explore the reasoning but do not simply approve the action.""")
     
-    resources = pathway_data.get('resources', {}).get('resources', [])
+    resources = runtime_context['resources']['available_resources']
     if resources:
         prompt_parts.append("\n\nAPPROVED LEARNING RESOURCES:")
         for resource in resources:
