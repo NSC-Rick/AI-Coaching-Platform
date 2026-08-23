@@ -1,0 +1,89 @@
+stages:
+  - stage_id: STAGE-SEE
+    name: SEE
+    description: Recognize the larger environment.
+    primary_capabilities:
+      - ST-01
+    reinforcing_capabilities: []
+    objectives:
+      - "Scan the change context for strategic and tactical cues"
+      - "Identify the forces shaping the change"
+      - "Distinguish what is being solved from why it matters"
+    exit_conditions:
+      - "Can identify and label strategic vs. tactical elements in a real case"
+      - "Can describe the forces shaping the change without prompting"
+
+  - stage_id: STAGE-CONNECT
+    name: CONNECT
+    description: Recognize relationships and dependencies.
+    primary_capabilities:
+      - ST-02
+      - ST-05
+    reinforcing_capabilities:
+      - ST-01
+    objectives:
+      - "Map stakeholders, processes, and technology touched by the change"
+      - "Identify dependencies that affect sequencing or outcomes"
+      - "Link the change to business goals and organizational context"
+    exit_conditions:
+      - "Can identify at least two meaningful dependencies in a real case"
+      - "Can explain how the change connects to one or more business goals"
+
+  - stage_id: STAGE-INTERPRET
+    name: INTERPRET
+    description: Understand implications and tradeoffs.
+    primary_capabilities:
+      - ST-03
+      - ST-04
+      - ST-06
+    reinforcing_capabilities:
+      - ST-01
+      - ST-02
+      - ST-05
+    objectives:
+      - "Weigh competing stakeholder perspectives"
+      - "Identify second-order effects and risks"
+      - "Compare options against constraints and business goals"
+    exit_conditions:
+      - "Can articulate implications and tradeoffs for at least two stakeholder groups"
+      - "Can identify second-order effects in a real change situation"
+
+  - stage_id: STAGE-ANTICIPATE
+    name: ANTICIPATE
+    description: Consider downstream effects.
+    primary_capabilities:
+      - ST-07
+    reinforcing_capabilities:
+      - ST-02
+      - ST-03
+      - ST-04
+      - ST-05
+      - ST-06
+    objectives:
+      - "Project consequences across time, groups, and systems"
+      - "Identify adoption and resistance risks before they surface"
+      - "Consider adjacent organizational impacts"
+    exit_conditions:
+      - "Can anticipate downstream consequences without being prompted"
+      - "Can describe likely effects on adoption, resistance, and adjacent systems"
+
+  - stage_id: STAGE-ADVISE
+    name: ADVISE
+    description: Translate insight into strategic guidance.
+    primary_capabilities:
+      - ST-08
+    reinforcing_capabilities:
+      - ST-01
+      - ST-02
+      - ST-03
+      - ST-04
+      - ST-05
+      - ST-06
+      - ST-07
+    objectives:
+      - "Synthesize analysis into a clear recommendation"
+      - "Frame the recommendation with business rationale"
+      - "Communicate in sponsor-appropriate language"
+    exit_conditions:
+      - "Can produce a strategic recommendation supported by business rationale"
+      - "Can tailor framing to an executive or sponsor audience"

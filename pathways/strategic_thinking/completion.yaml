@@ -1,0 +1,48 @@
+completion:
+  - criterion_id: ST-C01
+    description: "Demonstrates the ability to distinguish strategic from tactical issues"
+    evidence:
+      - ST-EV-01
+    required: true
+
+  - criterion_id: ST-C02
+    description: "Demonstrates dependency awareness"
+    evidence:
+      - ST-EV-02
+    required: true
+
+  - criterion_id: ST-C03
+    description: "Demonstrates stakeholder perspective-taking"
+    evidence:
+      - ST-EV-03
+    required: true
+
+  - criterion_id: ST-C04
+    description: "Demonstrates second-order thinking"
+    evidence:
+      - ST-EV-04
+    required: true
+
+  - criterion_id: ST-C05
+    description: "Demonstrates tradeoff analysis"
+    evidence:
+      - ST-EV-05
+    required: true
+
+  - criterion_id: ST-C06
+    description: "Demonstrates business-outcome connection"
+    evidence:
+      - ST-EV-06
+    required: true
+
+  - criterion_id: ST-C07
+    description: "Demonstrates anticipation of downstream consequences"
+    evidence:
+      - ST-EV-07
+    required: true
+
+  - criterion_id: ST-C08
+    description: "Demonstrates strategic recommendation framing"
+    evidence:
+      - ST-EV-08
+    required: true

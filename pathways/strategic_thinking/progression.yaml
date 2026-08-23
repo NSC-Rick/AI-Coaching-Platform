@@ -1,0 +1,39 @@
+progression:
+  - from_stage: STAGE-SEE
+    to_stage: STAGE-CONNECT
+    progression_type: evidence_based
+    description: >
+      Practitioner consistently distinguishes strategic from tactical issues
+      and recognizes the broader change context.
+    evidence_considered:
+      - ST-EV-01
+
+  - from_stage: STAGE-CONNECT
+    to_stage: STAGE-INTERPRET
+    progression_type: evidence_based
+    description: >
+      Practitioner independently recognizes meaningful dependencies and
+      considers multiple stakeholder perspectives.
+    evidence_considered:
+      - ST-EV-02
+      - ST-EV-03
+
+  - from_stage: STAGE-INTERPRET
+    to_stage: STAGE-ANTICIPATE
+    progression_type: evidence_based
+    description: >
+      Practitioner interprets second-order effects, tradeoffs, and
+      implications for business outcomes.
+    evidence_considered:
+      - ST-EV-04
+      - ST-EV-05
+      - ST-EV-06
+
+  - from_stage: STAGE-ANTICIPATE
+    to_stage: STAGE-ADVISE
+    progression_type: evidence_based
+    description: >
+      Practitioner independently anticipates downstream consequences across
+      time, stakeholder groups, and adjacent systems.
+    evidence_considered:
+      - ST-EV-07

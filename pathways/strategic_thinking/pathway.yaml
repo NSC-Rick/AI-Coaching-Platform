@@ -1,0 +1,28 @@
+pathway_id: CM-002
+slug: strategic_thinking
+name: Strategic Thinking
+version: "0.1"
+status: draft
+domain: Organizational Change Management
+
+purpose: >
+  Develop the ability of a Change Management practitioner to think
+  strategically about a change initiative rather than operate only at
+  the level of tactical execution.
+
+target_user: >
+  Change Management practitioners who are strong at delivery and
+  task execution but are developing the ability to connect change
+  work to business strategy, dependencies, tradeoffs, organizational
+  context, and longer-term consequences.
+
+entry_context: >
+  The practitioner has an active or recently completed change
+  initiative that can serve as a real-work coaching case.
+
+expected_outcome: >
+  The practitioner increasingly distinguishes strategic from tactical
+  issues, recognizes dependencies, identifies second-order effects,
+  evaluates stakeholder perspectives, connects change decisions to
+  business outcomes, articulates tradeoffs, anticipates downstream
+  consequences, and frames strategic recommendations.

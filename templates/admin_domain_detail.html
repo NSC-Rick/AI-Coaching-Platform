@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}{{ domain.name }} - Admin{% endblock %}
+
+{% block content %}
+<div class="admin-portal">
+    <div class="welcome-section">
+        <h2>{{ domain.name }}</h2>
+        <p class="subtitle">{{ domain.description or '' }}</p>
+    </div>
+
+    <div style="margin-bottom: 1rem;">
+        <a href="{{ url_for('admin_domains') }}" class="btn btn-secondary">&larr; Domains</a>
+        <a href="{{ url_for('admin_domain_edit', domain_id=domain.id) }}" class="btn btn-secondary">Edit Domain</a>
+        <a href="{{ url_for('admin_domain_component_new', domain_id=domain.id) }}" class="btn btn-primary">+ Add Component</a>
+    </div>
+
+    <div class="info-row">
+        <span class="label">Status:</span>
+        <span class="value">
+            {% if domain.status == 'active' %}
+            <span class="badge status-active">Active</span>
+            {% elif domain.status == 'draft' %}
+            <span class="badge" style="background-color: #fef3c7; color: #92400e;">Draft</span>
+            {% else %}
+            <span class="badge" style="background-color: #e2e8f0; color: #475569;">Inactive</span>
+            {% endif %}
+        </span>
+    </div>
+
+    <div class="card" style="margin-top: 1rem;">
+        <h3>Pathways</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Pathway ID</th>
+                    <th>Name</th>
+                    <th>Status</th>
+                    <th>Runtime</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in pathways %}
+                <tr>
+                    <td>{{ p.pathway.pathway_id }}</td>
+                    <td>{{ p.pathway.name }}</td>
+                    <td>{{ p.pathway.status|title }}</td>
+                    <td>
+                        {% if p.runtime_ready %}
+                        <span class="badge status-active">Runtime Ready</span>
+                        {% else %}
+                        <span class="badge" style="background-color: #e2e8f0; color: #475569;">Not Runtime Ready</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="no-data">No pathways defined.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card" style="margin-top: 1rem;">
+        <h3>Domain Package</h3>
+        <table class="data-table">
+            <tbody>
+                {% for type, label in component_labels.items() %}
+                <tr>
+                    <td><a href="{{ url_for('admin_domain_components', domain_id=domain.id, type=type) }}">{{ label }}</a></td>
+                    <td>{{ component_counts.get(type, 0) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

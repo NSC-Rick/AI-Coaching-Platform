@@ -1,0 +1,82 @@
+capabilities:
+  - capability_id: ST-01
+    name: Distinguish Tactical and Strategic Issues
+    description: >
+      Separate the day-to-day tasks and execution concerns from the
+      larger direction, tradeoffs, and implications that shape the
+      change.
+    target_behaviors:
+      - "Labels an issue as strategic or tactical and explains why"
+      - "Recognizes when a conversation is stuck in tactics and shifts it upward"
+      - "Describes how a tactical choice connects to a strategic objective"
+
+  - capability_id: ST-02
+    name: Recognize Dependencies
+    description: >
+      See how people, processes, technology, and structure are
+      connected in the change and identify relationships that affect
+      sequencing and risk.
+    target_behaviors:
+      - "Identifies at least two meaningful dependencies in a change case"
+      - "Explains how a change in one area affects another"
+      - "Uses dependency awareness to inform sequencing or focus"
+
+  - capability_id: ST-03
+    name: Identify Second-Order Effects
+    description: >
+      Look beyond the immediate impact of a decision to the indirect
+      and delayed consequences for the organization.
+    target_behaviors:
+      - "Names second-order effects that others have not yet raised"
+      - "Explains how an immediate benefit may create a later risk"
+      - "Distinguishes first-order from second-order consequences"
+
+  - capability_id: ST-04
+    name: Evaluate Stakeholder Perspectives
+    description: >
+      Consider the interests, concerns, and likely reactions of
+      multiple stakeholder groups affected by the change.
+    target_behaviors:
+      - "Articulates two or more stakeholder perspectives on the same issue"
+      - "Identifies what each group values, fears, or needs"
+      - "Uses perspective-taking to shape communication or engagement"
+
+  - capability_id: ST-05
+    name: Connect Change Decisions to Business Outcomes
+    description: >
+      Link change choices to organizational goals, risks, and value
+      so decisions are grounded in business rationale.
+    target_behaviors:
+      - "States how a change decision supports or threatens a business outcome"
+      - "Translates a change activity into a business impact"
+      - "Frames tradeoffs using business goals as the reference"
+
+  - capability_id: ST-06
+    name: Evaluate Tradeoffs
+    description: >
+      Compare competing options against constraints, benefits, and
+      risks and make the tradeoff explicit.
+    target_behaviors:
+      - "Lists explicit tradeoffs between two or more options"
+      - "Identifies what is gained and lost with each option"
+      - "Recommends a course of action with the tradeoff rationale stated"
+
+  - capability_id: ST-07
+    name: Anticipate Downstream Consequences
+    description: >
+      Project consequences across time, adoption curves, and adjacent
+      systems before they occur.
+    target_behaviors:
+      - "Describes likely consequences of a change over time"
+      - "Identifies adoption, resistance, or support risks before they surface"
+      - "Anticipates effects on adjacent teams, processes, or systems"
+
+  - capability_id: ST-08
+    name: Frame Strategic Recommendations
+    description: >
+      Translate analysis into clear, sponsor-ready guidance that
+      connects insight to action and business rationale.
+    target_behaviors:
+      - "Presents a recommendation with supporting business rationale"
+      - "Tailors the framing to an executive or sponsor audience"
+      - "Distinguishes recommendation from implementation plan"

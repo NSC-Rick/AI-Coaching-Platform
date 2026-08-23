@@ -1,4 +1,4 @@
-from .models import db, User, Advisor, Client, Business, Engagement, PathwayState, Commitment, Risk, SignificantEvent, LearningRecord, CoachingObservation, Session, AdvisorGuidance, AdvisorAttention, SessionMessage, InformationDomain, Pathway
+from .models import db, User, Advisor, Client, Business, Engagement, PathwayState, Commitment, Risk, SignificantEvent, LearningRecord, CoachingObservation, Session, AdvisorGuidance, AdvisorAttention, SessionMessage, InformationDomain, Pathway, DomainComponent
 
 __all__ = [
     'db',
@@ -18,5 +18,6 @@ __all__ = [
     'AdvisorAttention',
     'SessionMessage',
     'InformationDomain',
-    'Pathway'
+    'Pathway',
+    'DomainComponent'
 ]

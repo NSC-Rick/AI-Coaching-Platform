@@ -21,6 +21,7 @@
                     <th>Name</th>
                     <th>Description</th>
                     <th>Pathways</th>
+                    <th>Package Items</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
@@ -28,7 +29,7 @@
             <tbody>
                 {% for d in domains %}
                 <tr>
-                    <td>{{ d.name }}</td>
+                    <td><a href="{{ url_for('admin_domain_detail', domain_id=d.id) }}">{{ d.name }}</a></td>
                     <td>{{ d.description or '&mdash;'|safe }}</td>
                     <td>
                         {{ d.pathways|length }} Pathway{{ 's' if d.pathways|length != 1 else '' }}
@@ -36,6 +37,7 @@
                         <br><small>{{ d.pathways|map(attribute='name')|join(', ') }}</small>
                         {% endif %}
                     </td>
+                    <td>{{ d.components|length }} Component{{ 's' if d.components|length != 1 else '' }}</td>
                     <td>
                         {% if d.status == 'active' %}
                         <span class="badge status-active">Active</span>
@@ -46,12 +48,13 @@
                         {% endif %}
                     </td>
                     <td>
+                        <a href="{{ url_for('admin_domain_detail', domain_id=d.id) }}" class="btn btn-secondary">View</a>
                         <a href="{{ url_for('admin_domain_edit', domain_id=d.id) }}" class="btn btn-secondary">Edit</a>
                     </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="4" class="no-data">No information domains defined.</td>
+                    <td colspan="6" class="no-data">No information domains defined.</td>
                 </tr>
                 {% endfor %}
             </tbody>

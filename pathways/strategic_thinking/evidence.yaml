@@ -1,0 +1,48 @@
+evidence:
+  - evidence_id: ST-EV-01
+    capability_id: ST-01
+    stage_id: STAGE-SEE
+    description: "Distinguishes strategic from tactical issues without prompting"
+    evidence_type: observation
+
+  - evidence_id: ST-EV-02
+    capability_id: ST-02
+    stage_id: STAGE-CONNECT
+    description: "Identifies dependencies before being asked"
+    evidence_type: observation
+
+  - evidence_id: ST-EV-03
+    capability_id: ST-04
+    stage_id: STAGE-CONNECT
+    description: "Considers multiple stakeholder perspectives"
+    evidence_type: observation
+
+  - evidence_id: ST-EV-04
+    capability_id: ST-03
+    stage_id: STAGE-INTERPRET
+    description: "Articulates second-order consequences"
+    evidence_type: observation
+
+  - evidence_id: ST-EV-05
+    capability_id: ST-06
+    stage_id: STAGE-INTERPRET
+    description: "Identifies explicit tradeoffs"
+    evidence_type: observation
+
+  - evidence_id: ST-EV-06
+    capability_id: ST-05
+    stage_id: STAGE-INTERPRET
+    description: "Connects change decisions and implications to business outcomes"
+    evidence_type: observation
+
+  - evidence_id: ST-EV-07
+    capability_id: ST-07
+    stage_id: STAGE-ANTICIPATE
+    description: "Anticipates effects across time and groups"
+    evidence_type: observation
+
+  - evidence_id: ST-EV-08
+    capability_id: ST-08
+    stage_id: STAGE-ADVISE
+    description: "Frames recommendations in strategic terms"
+    evidence_type: observation

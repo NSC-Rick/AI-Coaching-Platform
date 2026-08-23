@@ -1,0 +1,84 @@
+{
+  "activities": [
+    {
+      "activity_id": "ST-A01",
+      "stage_id": "STAGE-SEE",
+      "title": "Strategic vs Tactical Reflection",
+      "description": "Review a recent change decision and identify which parts were tactical and which were strategic.",
+      "instructions": "Pick one decision from your current change. Write one sentence describing the tactical choice and one sentence describing the strategic choice it served. If the decision was purely tactical, note what strategic question was not addressed.",
+      "primary_capabilities": ["ST-01"],
+      "reinforcing_capabilities": [],
+      "completion_criteria": "Can clearly separate the tactical decision from the strategic purpose and explain why the distinction matters."
+    },
+    {
+      "activity_id": "ST-A02",
+      "stage_id": "STAGE-CONNECT",
+      "title": "Dependency Mapping",
+      "description": "Map the people, processes, and systems that must be ready for the change to succeed.",
+      "instructions": "List the three most important dependencies for your change. For each, note what must be true and what happens if it is not. Identify one dependency that is currently invisible or under-managed.",
+      "primary_capabilities": ["ST-02"],
+      "reinforcing_capabilities": ["ST-01"],
+      "completion_criteria": "Has identified at least two meaningful dependencies and can explain the effect of each on the change."
+    },
+    {
+      "activity_id": "ST-A03",
+      "stage_id": "STAGE-CONNECT",
+      "title": "Stakeholder Reframing",
+      "description": "Re-examine the change from the perspective of two different stakeholder groups.",
+      "instructions": "Choose two stakeholder groups affected by the change. For each, write: what they care about, what they may fear, and how the change looks through their eyes.",
+      "primary_capabilities": ["ST-04"],
+      "reinforcing_capabilities": ["ST-02"],
+      "completion_criteria": "Can articulate two distinct stakeholder perspectives and connect them to the change."
+    },
+    {
+      "activity_id": "ST-A04",
+      "stage_id": "STAGE-INTERPRET",
+      "title": "Scenario / What-If Analysis",
+      "description": "Explore how the change could play out under different conditions.",
+      "instructions": "Pick one key decision in the change. Describe two plausible scenarios: one where the decision works as intended, and one where it does not. For each, note the second-order effects.",
+      "primary_capabilities": ["ST-03"],
+      "reinforcing_capabilities": ["ST-02", "ST-04"],
+      "completion_criteria": "Can describe a plausible alternative scenario and identify second-order effects."
+    },
+    {
+      "activity_id": "ST-A05",
+      "stage_id": "STAGE-INTERPRET",
+      "title": "Tradeoff Analysis",
+      "description": "Compare two realistic options and make the tradeoffs explicit.",
+      "instructions": "Identify two realistic options for a current change decision. For each, list what is gained, what is lost, and the business-outcome impact. State which option you would recommend and why.",
+      "primary_capabilities": ["ST-06"],
+      "reinforcing_capabilities": ["ST-05"],
+      "completion_criteria": "Can list explicit tradeoffs and connect each option to business outcomes."
+    },
+    {
+      "activity_id": "ST-A06",
+      "stage_id": "STAGE-ANTICIPATE",
+      "title": "Real-Work Strategic Review",
+      "description": "Apply strategic thinking lenses to an active or recently completed change.",
+      "instructions": "Select an active change. Walk through the SEE, CONNECT, INTERPRET, and ANTICIPATE lenses and write one key insight from each. Identify one insight you will raise with the sponsor or team.",
+      "primary_capabilities": ["ST-07"],
+      "reinforcing_capabilities": ["ST-01", "ST-02", "ST-03", "ST-04", "ST-05", "ST-06"],
+      "completion_criteria": "Can produce insights across multiple lenses and identify one actionable implication."
+    },
+    {
+      "activity_id": "ST-A07",
+      "stage_id": "STAGE-ADVISE",
+      "title": "Decision Framing",
+      "description": "Prepare a strategic framing for a pending change decision.",
+      "instructions": "For one pending decision, draft: the decision to be made, the business outcome at stake, the options, the tradeoffs, and a recommended course of action.",
+      "primary_capabilities": ["ST-05", "ST-08"],
+      "reinforcing_capabilities": ["ST-06", "ST-07"],
+      "completion_criteria": "Can frame a decision using business outcomes and options with tradeoffs."
+    },
+    {
+      "activity_id": "ST-A08",
+      "stage_id": "STAGE-ADVISE",
+      "title": "Executive Briefing",
+      "description": "Draft a one-page brief for a sponsor or executive audience.",
+      "instructions": "Draft a one-page briefing that includes: the strategic issue, what is at stake, the options, the recommended course of action, and the business rationale. Keep it to one page.",
+      "primary_capabilities": ["ST-08"],
+      "reinforcing_capabilities": ["ST-05", "ST-06", "ST-07"],
+      "completion_criteria": "Can produce a concise, sponsor-ready recommendation with business rationale."
+    }
+  ]
+}

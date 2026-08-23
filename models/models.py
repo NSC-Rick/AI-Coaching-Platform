@@ -239,3 +239,27 @@ class Pathway(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
     domain = db.relationship('InformationDomain', backref='pathways')
+
+
+class DomainComponent(db.Model):
+    __tablename__ = 'domain_components'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    domain_id = db.Column(db.Integer, db.ForeignKey('information_domains.id'), nullable=False)
+    component_type = db.Column(db.String(50), nullable=False)
+    name = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.Text)
+    status = db.Column(db.String(50), nullable=False, default='draft')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
+    domain = db.relationship('InformationDomain', backref='components')
+    
+    COMPONENT_TYPES = ('knowledge_topic', 'method_framework', 'practitioner_guidance', 'resource', 'guardrail')
+    TYPE_LABELS = {
+        'knowledge_topic': 'Knowledge Topic',
+        'method_framework': 'Method / Framework',
+        'practitioner_guidance': 'Practitioner Guidance',
+        'resource': 'Resource',
+        'guardrail': 'Guardrail'
+    }

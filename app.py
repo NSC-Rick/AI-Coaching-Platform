@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, date
 from flask import Flask, render_template, redirect, url_for, request, flash, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from dotenv import load_dotenv
-from models import db, User, Advisor, Client, Business, Engagement, PathwayState, Commitment, Risk, SignificantEvent, LearningRecord, CoachingObservation, Session, AdvisorGuidance, AdvisorAttention, SessionMessage, InformationDomain, Pathway
+from models import db, User, Advisor, Client, Business, Engagement, PathwayState, Commitment, Risk, SignificantEvent, LearningRecord, CoachingObservation, Session, AdvisorGuidance, AdvisorAttention, SessionMessage, InformationDomain, Pathway, DomainComponent
 from coaching.ai_service import AIService, AIServiceError
 from coaching.context import build_coaching_context, format_context_for_display
 from coaching.engine import load_pathway
@@ -730,6 +730,168 @@ def admin_domain_edit(domain_id):
             logging.error(f'Error updating domain: {str(e)}')
     
     return render_template('admin_domain_form.html', domain=domain)
+
+
+@app.route('/admin/domains/<int:domain_id>')
+@require_role('ADMIN')
+def admin_domain_detail(domain_id):
+    domain = db.session.get(InformationDomain, domain_id)
+    if not domain:
+        flash('Domain not found.', 'error')
+        return redirect(url_for('admin_domains'))
+    
+    component_counts = {}
+    for component_type in DomainComponent.COMPONENT_TYPES:
+        count = DomainComponent.query.filter_by(
+            domain_id=domain.id,
+            component_type=component_type
+        ).count()
+        component_counts[component_type] = count
+    
+    pathways_runtime = []
+    for p in domain.pathways:
+        runtime_ready = True
+        try:
+            load_pathway(p.pathway_id)
+        except Exception:
+            runtime_ready = False
+        pathways_runtime.append({'pathway': p, 'runtime_ready': runtime_ready})
+    
+    return render_template('admin_domain_detail.html',
+                         domain=domain,
+                         pathways=pathways_runtime,
+                         component_counts=component_counts,
+                         component_labels=DomainComponent.TYPE_LABELS)
+
+
+@app.route('/admin/domains/<int:domain_id>/components')
+@require_role('ADMIN')
+def admin_domain_components(domain_id):
+    domain = db.session.get(InformationDomain, domain_id)
+    if not domain:
+        flash('Domain not found.', 'error')
+        return redirect(url_for('admin_domains'))
+    
+    type_filter = request.args.get('type', '').strip()
+    query = DomainComponent.query.filter_by(domain_id=domain.id)
+    if type_filter in DomainComponent.COMPONENT_TYPES:
+        query = query.filter_by(component_type=type_filter)
+    components = query.order_by(DomainComponent.name).all()
+    
+    return render_template('admin_domain_components.html',
+                         domain=domain,
+                         components=components,
+                         type_filter=type_filter,
+                         component_labels=DomainComponent.TYPE_LABELS)
+
+
+@app.route('/admin/domains/<int:domain_id>/components/new', methods=['GET', 'POST'])
+@require_role('ADMIN')
+def admin_domain_component_new(domain_id):
+    domain = db.session.get(InformationDomain, domain_id)
+    if not domain:
+        flash('Domain not found.', 'error')
+        return redirect(url_for('admin_domains'))
+    
+    if request.method == 'POST':
+        component_type = request.form.get('component_type', '').strip()
+        name = request.form.get('name', '').strip()
+        description = request.form.get('description', '').strip()
+        status = request.form.get('status', 'draft')
+        
+        if component_type not in DomainComponent.COMPONENT_TYPES:
+            flash('Invalid component type.', 'error')
+            return render_template('admin_domain_component_form.html',
+                                 domain=domain, component=None,
+                                 component_labels=DomainComponent.TYPE_LABELS)
+        
+        if not name:
+            flash('Component name is required.', 'error')
+            return render_template('admin_domain_component_form.html',
+                                 domain=domain, component=None,
+                                 component_labels=DomainComponent.TYPE_LABELS)
+        
+        if status not in ('draft', 'active', 'inactive'):
+            flash('Invalid status.', 'error')
+            return render_template('admin_domain_component_form.html',
+                                 domain=domain, component=None,
+                                 component_labels=DomainComponent.TYPE_LABELS)
+        
+        try:
+            component = DomainComponent(
+                domain_id=domain.id,
+                component_type=component_type,
+                name=name,
+                description=description,
+                status=status
+            )
+            db.session.add(component)
+            db.session.commit()
+            flash('Component created.', 'success')
+            return redirect(url_for('admin_domain_detail', domain_id=domain.id))
+        except Exception as e:
+            db.session.rollback()
+            flash('Failed to create component.', 'error')
+            logging.error(f'Error creating domain component: {str(e)}')
+    
+    return render_template('admin_domain_component_form.html',
+                         domain=domain, component=None,
+                         component_labels=DomainComponent.TYPE_LABELS)
+
+
+@app.route('/admin/domains/<int:domain_id>/components/<int:component_id>/edit', methods=['GET', 'POST'])
+@require_role('ADMIN')
+def admin_domain_component_edit(domain_id, component_id):
+    domain = db.session.get(InformationDomain, domain_id)
+    if not domain:
+        flash('Domain not found.', 'error')
+        return redirect(url_for('admin_domains'))
+    
+    component = db.session.get(DomainComponent, component_id)
+    if not component or component.domain_id != domain.id:
+        flash('Component not found.', 'error')
+        return redirect(url_for('admin_domain_detail', domain_id=domain.id))
+    
+    if request.method == 'POST':
+        component_type = request.form.get('component_type', '').strip()
+        name = request.form.get('name', '').strip()
+        description = request.form.get('description', '').strip()
+        status = request.form.get('status', 'draft')
+        
+        if component_type not in DomainComponent.COMPONENT_TYPES:
+            flash('Invalid component type.', 'error')
+            return render_template('admin_domain_component_form.html',
+                                 domain=domain, component=component,
+                                 component_labels=DomainComponent.TYPE_LABELS)
+        
+        if not name:
+            flash('Component name is required.', 'error')
+            return render_template('admin_domain_component_form.html',
+                                 domain=domain, component=component,
+                                 component_labels=DomainComponent.TYPE_LABELS)
+        
+        if status not in ('draft', 'active', 'inactive'):
+            flash('Invalid status.', 'error')
+            return render_template('admin_domain_component_form.html',
+                                 domain=domain, component=component,
+                                 component_labels=DomainComponent.TYPE_LABELS)
+        
+        try:
+            component.component_type = component_type
+            component.name = name
+            component.description = description
+            component.status = status
+            db.session.commit()
+            flash('Component updated.', 'success')
+            return redirect(url_for('admin_domain_detail', domain_id=domain.id))
+        except Exception as e:
+            db.session.rollback()
+            flash('Failed to update component.', 'error')
+            logging.error(f'Error updating domain component: {str(e)}')
+    
+    return render_template('admin_domain_component_form.html',
+                         domain=domain, component=component,
+                         component_labels=DomainComponent.TYPE_LABELS)
 
 
 @app.route('/admin/pathways')

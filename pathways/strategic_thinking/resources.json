@@ -1,0 +1,99 @@
+{
+  "resources": [
+    {
+      "resource_id": "ST-R001",
+      "title": "Strategic vs Tactical Questions for Change",
+      "resource_type": "guide",
+      "description": "A short guide with questions to help distinguish strategic issues from tactical ones in a change initiative.",
+      "location": null,
+      "status": "placeholder",
+      "learning_objective": "Help the practitioner distinguish strategic from tactical questions.",
+      "when_to_recommend": [
+        "Practitioner is stuck in a task list and needs to lift perspective",
+        "Practitioner is preparing for a sponsor conversation"
+      ],
+      "follow_up_questions": [
+        "What changed in how you view the issue?",
+        "How does this show up in your current change?"
+      ],
+      "related_capability": "ST-01",
+      "related_stage": "STAGE-SEE"
+    },
+    {
+      "resource_id": "ST-R002",
+      "title": "Stakeholder Mapping for Change",
+      "resource_type": "worksheet",
+      "description": "A worksheet for identifying stakeholders, their interests, and their likely reactions to a change.",
+      "location": null,
+      "status": "placeholder",
+      "learning_objective": "Support practical stakeholder perspective-taking.",
+      "when_to_recommend": [
+        "Practitioner needs to understand who is affected",
+        "Practitioner is planning communication or engagement"
+      ],
+      "follow_up_questions": [
+        "Which stakeholder perspective surprised you?",
+        "What does that perspective mean for your plan?"
+      ],
+      "related_capability": "ST-04",
+      "related_stage": "STAGE-CONNECT"
+    },
+    {
+      "resource_id": "ST-R003",
+      "title": "Second-Order Effects in Organizations",
+      "resource_type": "audio",
+      "description": "A short audio piece introducing second-order and downstream effects in organizational change.",
+      "location": null,
+      "status": "placeholder",
+      "learning_objective": "Help the practitioner look beyond immediate change effects.",
+      "when_to_recommend": [
+        "Practitioner is surprised by unintended consequences",
+        "Practitioner is about to make a major change decision"
+      ],
+      "follow_up_questions": [
+        "What second-order effect could you see in your change?",
+        "How would you prepare for it?"
+      ],
+      "related_capability": "ST-03",
+      "related_stage": "STAGE-INTERPRET"
+    },
+    {
+      "resource_id": "ST-R004",
+      "title": "Dependency Map Template",
+      "resource_type": "worksheet",
+      "description": "A simple template for mapping the people, processes, and systems a change depends on.",
+      "location": null,
+      "status": "placeholder",
+      "learning_objective": "Help the practitioner identify and communicate dependencies.",
+      "when_to_recommend": [
+        "Practitioner is sequencing change activities",
+        "Practitioner is identifying risks"
+      ],
+      "follow_up_questions": [
+        "What dependency is most at risk?",
+        "What would you do if it slips?"
+      ],
+      "related_capability": "ST-02",
+      "related_stage": "STAGE-CONNECT"
+    },
+    {
+      "resource_id": "ST-R005",
+      "title": "Framing Change Recommendations for Sponsors",
+      "resource_type": "guide",
+      "description": "A guide for structuring change recommendations so they are clear, concise, and useful for sponsors.",
+      "location": null,
+      "status": "placeholder",
+      "learning_objective": "Help the practitioner frame recommendations for executive audiences.",
+      "when_to_recommend": [
+        "Practitioner is preparing a sponsor recommendation",
+        "Practitioner is moving from analysis to advice"
+      ],
+      "follow_up_questions": [
+        "What is the core decision you are asking the sponsor to make?",
+        "What would change if they said yes?"
+      ],
+      "related_capability": "ST-08",
+      "related_stage": "STAGE-ADVISE"
+    }
+  ]
+}

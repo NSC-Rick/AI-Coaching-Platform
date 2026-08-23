@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Components - {{ domain.name }}{% endblock %}
+
+{% block content %}
+<div class="admin-portal">
+    <div class="welcome-section">
+        <h2>{{ domain.name }}</h2>
+        <p class="subtitle">
+            {% if type_filter %}{{ component_labels[type_filter] }}{% else %}All{% endif %} Components
+        </p>
+    </div>
+
+    <div style="margin-bottom: 1rem;">
+        <a href="{{ url_for('admin_domain_detail', domain_id=domain.id) }}" class="btn btn-secondary">&larr; Domain</a>
+        <a href="{{ url_for('admin_domain_component_new', domain_id=domain.id) }}" class="btn btn-primary">+ Add Component</a>
+    </div>
+
+    <div class="card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Description</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in components %}
+                <tr>
+                    <td>{{ c.name }}</td>
+                    <td>{{ component_labels[c.component_type] }}</td>
+                    <td>{{ c.status|title }}</td>
+                    <td>{{ c.description or '&mdash;'|safe }}</td>
+                    <td>
+                        <a href="{{ url_for('admin_domain_component_edit', domain_id=domain.id, component_id=c.id) }}" class="btn btn-secondary">Edit</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="no-data">No components defined.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
