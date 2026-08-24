@@ -113,10 +113,12 @@ export async function startVoiceConversation(options) {
             
             // Message tracking
             onMessage: (message) => {
+                const text = message?.message || message?.content;
+                const role = message?.role || message?.source;
                 console.log('[VOICE] Message received:', {
                     type: message?.type,
-                    role: message?.role,
-                    hasContent: Boolean(message?.content)
+                    role: role,
+                    hasMessage: Boolean(text)
                 });
                 if (onMessage) onMessage(message);
             },

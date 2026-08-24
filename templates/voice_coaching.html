@@ -387,6 +387,7 @@
     let conversation = null;
     let sessionId = null;
     let conversationStartTime = null;
+    let conversationMessages = [];
     
     // Diagnostic state tracking
     let userRequestedEnd = false;
@@ -455,6 +456,7 @@
             // Reset state flags
             userRequestedEnd = false;
             sessionCompletionSent = false;
+            conversationMessages = [];
             
             clearError();
             updateStatus('Requesting microphone access...', 'connecting');
@@ -552,7 +554,26 @@
                 },
                 
                 onMessage: (message) => {
-                    console.log('[VOICE] UI: Message received');
+                    const text = message?.message || message?.content;
+                    const rawRole = message?.role || message?.source;
+                    
+                    let role = null;
+                    if (rawRole === 'user') {
+                        role = 'user';
+                    } else if (rawRole === 'agent' || rawRole === 'ai') {
+                        role = 'assistant';
+                    }
+                    
+                    if (role && text && text.trim()) {
+                        conversationMessages.push({
+                            role,
+                            content: text.trim(),
+                            timestamp: new Date().toISOString()
+                        });
+                        console.log('[VOICE] Transcript message captured:', role);
+                    } else if (rawRole) {
+                        console.log('[VOICE] Message ignored, not a transcript:', rawRole);
+                    }
                 }
             });
             
@@ -622,8 +643,10 @@
                 session_id: sessionId,
                 duration: conversationStartTime ? Math.floor((new Date() - conversationStartTime) / 1000) : null,
                 status: 'completed',
-                messages: []
+                messages: conversationMessages
             };
+            
+            console.log('[VOICE] Completing session with messages:', conversationMessages.length);
             
             console.log('[VOICE] Sending completion request for session:', sessionId);
             const response = await fetch(`/voice/session/${sessionId}/complete`, {

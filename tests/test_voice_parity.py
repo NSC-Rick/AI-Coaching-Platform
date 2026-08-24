@@ -124,6 +124,44 @@ class TestVoiceCoachingParity(unittest.TestCase):
         self.assertIn('custom_llm_extra_body', cco['agent'])
         self.assertEqual(cco['agent']['custom_llm_extra_body']['app_platform'], 'ai_coaching_platform')
 
+    def test_voice_message_normalization(self):
+        """normalize_conversation_to_messages accepts the voice transcript payload."""
+        voice_service = VoiceService()
+
+        conversation_data = {
+            'session_id': 'session-1',
+            'status': 'completed',
+            'messages': [
+                {'role': 'user', 'content': "Levi's confirmed they're going to pay a 50% deposit tomorrow."},
+                {'role': 'assistant', 'content': "That's a helpful development, Sarah."},
+                {'role': 'agent', 'content': "This will improve near-term cash visibility."}
+            ]
+        }
+
+        messages = voice_service.normalize_conversation_to_messages(conversation_data)
+        self.assertEqual(len(messages), 3)
+        self.assertEqual(messages[0]['role'], 'user')
+        self.assertEqual(messages[0]['content'], "Levi's confirmed they're going to pay a 50% deposit tomorrow.")
+        self.assertEqual(messages[1]['role'], 'assistant')
+        self.assertEqual(messages[2]['role'], 'agent')
+
+    def test_voice_transcript_payload_normalization(self):
+        """normalize_conversation_to_messages also supports ElevenLabs transcript list shape."""
+        voice_service = VoiceService()
+
+        conversation_data = {
+            'transcript': [
+                {'speaker': 'user', 'text': 'Hi coach.'},
+                {'speaker': 'agent', 'text': 'Hi Sarah.'}
+            ]
+        }
+
+        messages = voice_service.normalize_conversation_to_messages(conversation_data)
+        self.assertEqual(len(messages), 2)
+        self.assertEqual(messages[0]['role'], 'user')
+        self.assertEqual(messages[0]['content'], 'Hi coach.')
+        self.assertEqual(messages[1]['role'], 'agent')
+
     def test_voice_runtime_uses_adapter(self):
         """The resulting pathway name must come from the normalized runtime context."""
         config = self._build_config('RS-01', 18)
