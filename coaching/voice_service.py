@@ -12,6 +12,7 @@ import requests
 from typing import Optional, Dict, Any
 
 from .pathway_adapter import PathwayAdapter
+from .prompts import extract_guardrail_summary
 
 
 class VoiceService:
@@ -163,7 +164,10 @@ class VoiceService:
         
         pathway_name = runtime_context['pathway']['name']
         current_stage_id = runtime_context['current_stage']['id']
+        current_stage_name = runtime_context['current_stage']['name']
         current_day_value = runtime_context['current_stage']['current_day']
+        
+        pathway_context = self._build_pathway_context(runtime_context)
         
         config = {
             'agent_id': self.agent_id,
@@ -185,6 +189,7 @@ class VoiceService:
                             pathway_name,
                             current_stage_id,
                             current_day_value,
+                            pathway_context,
                             coaching_context
                         )
                     }
@@ -203,6 +208,41 @@ class VoiceService:
         
         return config
     
+    def _build_pathway_context(self, runtime_context: dict) -> str:
+        """
+        Build a concise pathway coaching context from PathwayRuntimeContext
+        for use in the voice agent prompt.
+        """
+        stage = runtime_context['current_stage']
+        if not stage:
+            return ''
+        
+        parts = []
+        parts.append(f"Stage: {stage['name']}")
+        if stage.get('current_day') is not None:
+            parts.append(f"Day: {stage['current_day']}")
+        
+        if stage.get('purpose'):
+            parts.append(f"\nPurpose:\n{stage['purpose']}")
+        
+        objectives = stage.get('objectives', [])
+        if objectives:
+            parts.append("\nCurrent Stage Objectives:")
+            for obj in objectives:
+                parts.append(f"- {obj}")
+        
+        stage_guidance = runtime_context['coaching'].get('stage_guidance', '')
+        if stage_guidance:
+            parts.append(f"\nCoaching Guidance:\n{stage_guidance}")
+        
+        guardrails = runtime_context['coaching'].get('guardrails', '')
+        if guardrails:
+            guardrail_summary = extract_guardrail_summary(guardrails)
+            if guardrail_summary:
+                parts.append(f"\nGuardrails:\n{guardrail_summary}")
+        
+        return "\n".join(parts)
+    
     def _build_agent_prompt(
         self,
         client_name: str,
@@ -210,6 +250,7 @@ class VoiceService:
         pathway_name: str,
         current_stage: str,
         current_day: int,
+        pathway_context: str,
         coaching_context: str
     ) -> str:
         """
@@ -225,7 +266,8 @@ class VoiceService:
             pathway_name: Current pathway name
             current_stage: Current pathway stage
             current_day: Day in pathway
-            coaching_context: Full coaching context from context builder
+            pathway_context: Concise pathway coaching context
+            coaching_context: Full client coaching context from context builder
             
         Returns:
             str: Complete agent prompt with context
@@ -252,6 +294,11 @@ IMPORTANT BEHAVIORAL RULES:
 - Do NOT pretend to be the human advisor
 - Do NOT fabricate facts or invent resources
 - Do NOT reveal internal implementation details
+
+Use the pathway context to guide what matters now, but respond naturally and conversationally. Do not recite the pathway structure unless it is useful to the client.
+
+PATHWAY CONTEXT FOR THIS SESSION:
+{pathway_context}
 
 CURRENT CLIENT CONTEXT:
 {coaching_context}

@@ -49,7 +49,7 @@ class TestVoiceCoachingParity(unittest.TestCase):
             engagement_id=1
         )
 
-    def _assert_recovery_voice_config(self, config, stage, day):
+    def _assert_recovery_voice_config(self, config, stage, day, stage_name, sample_objective):
         self.assertEqual(config['agent_id'], 'test-agent-id')
         self.assertEqual(config['user_id'], 'user-1')
 
@@ -76,17 +76,39 @@ class TestVoiceCoachingParity(unittest.TestCase):
         self.assertIn(f'Day {day}', prompt)
         self.assertIn(self.coaching_context, prompt)
 
+        # C3.1: pathway coaching context must be present in the voice prompt
+        self.assertIn('PATHWAY CONTEXT FOR THIS SESSION', prompt)
+        self.assertIn(f'Stage: {stage_name}', prompt)
+        self.assertIn('Purpose:', prompt)
+        self.assertIn('Current Stage Objectives:', prompt)
+        self.assertIn(sample_objective, prompt)
+        self.assertIn('Coaching Guidance:', prompt)
+        self.assertIn('Guardrails:', prompt)
+        self.assertIn('CURRENT CLIENT CONTEXT', prompt)
+
     def test_rs01_voice_config(self):
         config = self._build_config('RS-01', 18)
-        self._assert_recovery_voice_config(config, 'RS-01', 18)
+        self._assert_recovery_voice_config(
+            config, 'RS-01', 18,
+            stage_name='Immediate Stabilization',
+            sample_objective='Establish rolling cash visibility'
+        )
 
     def test_rs02_voice_config(self):
         config = self._build_config('RS-02', 45)
-        self._assert_recovery_voice_config(config, 'RS-02', 45)
+        self._assert_recovery_voice_config(
+            config, 'RS-02', 45,
+            stage_name='Revenue Activation & Structural Tightening',
+            sample_objective='Review historical customer data'
+        )
 
     def test_rs03_voice_config(self):
         config = self._build_config('RS-03', 75)
-        self._assert_recovery_voice_config(config, 'RS-03', 75)
+        self._assert_recovery_voice_config(
+            config, 'RS-03', 75,
+            stage_name='Governance & Accountability',
+            sample_objective='Maintain weekly financial review'
+        )
 
     def test_voice_runtime_uses_adapter(self):
         """The resulting pathway name must come from the normalized runtime context."""
