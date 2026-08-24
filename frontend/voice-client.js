@@ -21,6 +21,7 @@ import { Conversation } from '@elevenlabs/client';
 export async function startVoiceConversation(options) {
     const {
         signedUrl,
+        config,
         dynamicVariables,
         onConnect,
         onDisconnect,
@@ -33,14 +34,43 @@ export async function startVoiceConversation(options) {
     console.log('[VOICE] Starting ElevenLabs conversation with official SDK v1.21.0');
     console.log('[VOICE] Signed URL present:', Boolean(signedUrl));
     console.log('[VOICE] Signed URL length:', signedUrl?.length);
+    console.log('[VOICE] Backend runtime config present:', Boolean(config));
+
+    // Map backend-generated config to the SDK option names.
+    // The backend returns conversation_config_override in snake_case;
+    // the SDK expects overrides (conversation config) and customLlmExtraBody
+    // as top-level session options.
+    const overrides = config?.conversation_config_override
+        ? {
+            agent: {
+                prompt: config.conversation_config_override.agent?.prompt
+            }
+        }
+        : undefined;
+
+    const customLlmExtraBody = config?.conversation_config_override?.agent?.custom_llm_extra_body;
+    const userId = config?.user_id;
+
+    const promptText = config?.conversation_config_override?.agent?.prompt?.prompt;
+    console.log('[VOICE] Prompt override present:', Boolean(promptText));
+    console.log('[VOICE] Prompt length:', promptText ? promptText.length : 0);
+    console.log('[VOICE] Pathway context marker present:', promptText ? promptText.includes('PATHWAY CONTEXT FOR THIS SESSION') : false);
+    console.log('[VOICE] Client context marker present:', promptText ? promptText.includes('CURRENT CLIENT CONTEXT') : false);
+    console.log('[VOICE] customLlmExtraBody present:', Boolean(customLlmExtraBody));
+    console.log('[VOICE] app session id:', customLlmExtraBody ? customLlmExtraBody.app_session_id : undefined);
+    console.log('[VOICE] overrides passed to SDK:', Boolean(overrides));
+    console.log('[VOICE] user id:', userId);
     console.log('[VOICE] Dynamic variables:', dynamicVariables);
 
     try {
         console.log('[VOICE] Calling Conversation.startSession');
         
-        const conversation = await Conversation.startSession({
+        const startOptions = {
             signedUrl,
             dynamicVariables,
+            ...(overrides ? { overrides } : {}),
+            ...(customLlmExtraBody ? { customLlmExtraBody } : {}),
+            ...(userId ? { userId } : {}),
             
             // Connection lifecycle callbacks
             onConnect: (data) => {
@@ -95,7 +125,15 @@ export async function startVoiceConversation(options) {
             onDebug: (event) => {
                 console.log('[VOICE] Debug event:', event);
             }
+        };
+
+        console.log('[VOICE] SDK start options prepared:', {
+            hasOverrides: Boolean(startOptions.overrides),
+            hasCustomLlmExtraBody: Boolean(startOptions.customLlmExtraBody),
+            hasUserId: Boolean(startOptions.userId)
         });
+
+        const conversation = await Conversation.startSession(startOptions);
 
         console.log('[VOICE] ✓ startSession resolved successfully');
         console.log('[VOICE] Conversation object created:', Boolean(conversation));

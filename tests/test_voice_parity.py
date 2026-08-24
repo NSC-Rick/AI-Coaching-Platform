@@ -110,6 +110,20 @@ class TestVoiceCoachingParity(unittest.TestCase):
             sample_objective='Maintain weekly financial review'
         )
 
+    def test_voice_runtime_config_has_handoff_fields(self):
+        """Backend config must contain the fields the frontend hands to the SDK."""
+        config = self._build_config('RS-01', 18)
+        self.assertIn('user_id', config)
+        self.assertIn('session_metadata', config)
+        self.assertIn('conversation_config_override', config)
+
+        cco = config['conversation_config_override']
+        self.assertIn('agent', cco)
+        self.assertIn('prompt', cco['agent'])
+        self.assertIn('prompt', cco['agent']['prompt'])
+        self.assertIn('custom_llm_extra_body', cco['agent'])
+        self.assertEqual(cco['agent']['custom_llm_extra_body']['app_platform'], 'ai_coaching_platform')
+
     def test_voice_runtime_uses_adapter(self):
         """The resulting pathway name must come from the normalized runtime context."""
         config = self._build_config('RS-01', 18)
