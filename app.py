@@ -1513,7 +1513,7 @@ def init_voice_session(engagement_id):
         session_config = voice_service.build_session_config(
             client_name=engagement.client.first_name,
             business_name=engagement.client.business.business_name,
-            pathway_name=pathway_data.get('name', 'Recovery & Stabilization'),
+            pathway_data=pathway_data,
             current_stage=pathway_state.current_stage_id if pathway_state else 'RS-01',
             current_day=pathway_state.current_day if pathway_state else 1,
             coaching_context=format_context_for_display(context),

@@ -11,6 +11,8 @@ import os
 import requests
 from typing import Optional, Dict, Any
 
+from .pathway_adapter import PathwayAdapter
+
 
 class VoiceService:
     """
@@ -121,7 +123,7 @@ class VoiceService:
         self,
         client_name: str,
         business_name: str,
-        pathway_name: str,
+        pathway_data: dict,
         current_stage: str,
         current_day: int,
         coaching_context: str,
@@ -142,8 +144,8 @@ class VoiceService:
         Args:
             client_name: Client's preferred name
             business_name: Business name
-            pathway_name: Current pathway name
-            current_stage: Current pathway stage
+            pathway_data: Loaded package data from load_pathway()
+            current_stage: Current pathway stage ID
             current_day: Day in pathway
             coaching_context: Full coaching context from context builder
             session_id: Session ID for tracking
@@ -153,6 +155,16 @@ class VoiceService:
         Returns:
             dict: Configuration object for client-side initialization
         """
+        runtime_context = PathwayAdapter.from_package(
+            pathway_data,
+            current_stage_id=current_stage,
+            current_day=current_day
+        )
+        
+        pathway_name = runtime_context['pathway']['name']
+        current_stage_id = runtime_context['current_stage']['id']
+        current_day_value = runtime_context['current_stage']['current_day']
+        
         config = {
             'agent_id': self.agent_id,
             'user_id': user_id,
@@ -161,8 +173,8 @@ class VoiceService:
                 'client_name': client_name,
                 'business_name': business_name,
                 'pathway': pathway_name,
-                'stage': current_stage,
-                'day': current_day
+                'stage': current_stage_id,
+                'day': current_day_value
             },
             'conversation_config_override': {
                 'agent': {
@@ -171,8 +183,8 @@ class VoiceService:
                             client_name,
                             business_name,
                             pathway_name,
-                            current_stage,
-                            current_day,
+                            current_stage_id,
+                            current_day_value,
                             coaching_context
                         )
                     }
