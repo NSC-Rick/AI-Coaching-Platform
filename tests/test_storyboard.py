@@ -344,6 +344,8 @@ class TestStoryboardContext(unittest.TestCase):
         call_args = mock_ai.generate_coaching_response.call_args.kwargs
         self.assertIn('messages', call_args)
         self.assertIn('system_prompt', call_args)
+        self.assertIn('max_completion_tokens', call_args)
+        self.assertEqual(call_args['max_completion_tokens'], 5000)
         self.assertIn('Test Biz', call_args['messages'][0]['content'])
 
     def test_generate_storyboard_propagates_ai_error(self):

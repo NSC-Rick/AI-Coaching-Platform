@@ -335,14 +335,14 @@ def _log_context_diagnostics(engagement_id, context, serialized_context):
     logger.info("[STORYBOARD] Learning record count: %d", len(context.get('learning_records', [])))
 
 
-def generate_storyboard(context: dict, ai_service=None, max_completion_tokens: int = 2500, engagement_id=None) -> str:
+def generate_storyboard(context: dict, ai_service=None, max_completion_tokens: int = 5000, engagement_id=None) -> str:
     """
     Generate the Storyboard narrative from the structured context.
 
     Args:
         context: The Storyboard context from build_storyboard_context()
         ai_service: Optional AIService instance for test injection
-        max_completion_tokens: Maximum response length (kept at 2500)
+        max_completion_tokens: Maximum response length (Storyboard default 5000)
         engagement_id: Optional engagement ID for diagnostics
 
     Returns:
