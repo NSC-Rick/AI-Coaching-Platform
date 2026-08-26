@@ -446,9 +446,9 @@
     <div class="sidebar">
         {% if engagement %}
         <!-- HELPFUL RESOURCES -->
-        {% if learning_resources %}
         <div class="sidebar-card">
             <h3>Helpful Resources</h3>
+            {% if learning_resources %}
             {% for item in learning_resources %}
             <div class="resource-item">
                 <div class="resource-title">{{ item.resource.title }}</div>
@@ -461,13 +461,18 @@
                 {% endif %}
             </div>
             {% endfor %}
-        </div>
-        {% else %}
-        <div class="sidebar-card">
-            <h3>Helpful Resources</h3>
+            {% else %}
             <p class="no-data" style="padding: 1rem 0;">No resources recommended yet.</p>
+            {% endif %}
+
+            <div class="resource-item" style="border-top: 1px solid #eee; padding-top: 1rem; margin-top: 1rem;">
+                <div style="font-size: 0.75rem; color: #666; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">PATHWAY TOOL</div>
+                <div class="resource-title">Small Business Finance Modeler</div>
+                <div class="resource-meta">Interactive financial planning tool</div>
+                <div class="resource-description">Explore cash flow, profitability, and financial scenarios for your business.</div>
+                <a href="https://financemodeler-08o0.onrender.com/" class="btn btn-sm btn-secondary" target="_blank" rel="noopener noreferrer">Open Finance Modeler →</a>
+            </div>
         </div>
-        {% endif %}
         {% endif %}
     </div>
 </div>
