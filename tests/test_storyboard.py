@@ -201,11 +201,36 @@ class TestStoryboardContext(unittest.TestCase):
         self.assertIn('Starting Situation', prompt)
         self.assertIn('Key Developments', prompt)
         self.assertIn('Actions & Commitments', prompt)
-        self.assertIn('Advisor Interventions', prompt)
+        self.assertIn('Advisor & Coaching Support', prompt)
+        self.assertIn('Advisor Guidance', prompt)
+        self.assertIn('AI Coaching Support', prompt)
         self.assertIn('Pathway Progress', prompt)
         self.assertIn('Current Position & Next Focus', prompt)
         self.assertIn('Do not invent facts', prompt)
-        self.assertIn('Do not infer Pathway progression', prompt)
+        self.assertIn('Do not infer milestone completion', prompt)
+        self.assertIn('Use ONLY the information provided in the Storyboard Context', prompt)
+
+    def test_storyboard_prompt_removes_internal_metadata(self):
+        prompt = build_storyboard_prompt()
+        self.assertIn('database IDs', prompt)
+        self.assertIn('raw ISO timestamps', prompt)
+        self.assertIn('stage_id', prompt)
+        self.assertIn('PATHWAY-001', prompt)
+        self.assertIn('completed_at', prompt)
+
+    def test_storyboard_prompt_requires_deduplication(self):
+        prompt = build_storyboard_prompt()
+        self.assertIn('consolidate', prompt)
+        self.assertIn('duplicate', prompt)
+
+    def test_storyboard_prompt_requires_temporal_consistency(self):
+        prompt = build_storyboard_prompt()
+        self.assertIn('Newer explicit evidence', prompt)
+        self.assertIn('discrepancy', prompt)
+
+    def test_storyboard_prompt_requires_advisor_friendly_dates(self):
+        prompt = build_storyboard_prompt()
+        self.assertIn('Aug. 23, 2026', prompt)
 
     def test_generate_storyboard_calls_ai_service(self):
         mock_ai = MagicMock()
