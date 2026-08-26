@@ -1716,7 +1716,7 @@ def init_advisor_voice():
     
     config = {
         'agent_id': voice_service.agent_id,
-        'user_id': current_user.id
+        'user_id': str(current_user.id)
     }
     
     return jsonify({
