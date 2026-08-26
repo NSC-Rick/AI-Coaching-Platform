@@ -13,6 +13,7 @@ from coaching.prompts import build_coaching_system_prompt, build_extraction_prom
 from coaching.validator import ExtractionValidator, ValidationError
 from coaching.persistence import apply_extraction_updates, PersistenceError
 from coaching.advisor_helpers import build_coaching_snapshot, categorize_commitments, categorize_risks, build_recent_developments_timeline, determine_advisor_attention_status
+from coaching.storyboard import build_storyboard_context, generate_storyboard
 from coaching.voice_service import get_voice_service
 from background_processor import trigger_session_processing
 
@@ -1103,6 +1104,44 @@ def client_detail(engagement_id):
                          advisor_attention_status=advisor_attention_status,
                          last_session=last_session,
                          last_advisor_guidance=last_advisor_guidance)
+
+@app.route('/advisor/client/<int:engagement_id>/storyboard')
+@require_role('ADVISOR')
+def client_storyboard(engagement_id):
+    """
+    Generate and display a Client Storyboard for the advisor.
+    
+    This is a read-only, on-demand summary of the client's coaching journey.
+    It does not modify coaching state, Pathway state, or any client data.
+    """
+    engagement = db.session.get(Engagement, engagement_id)
+    
+    if not engagement or engagement.advisor_id != current_user.advisor.id:
+        flash('Client not found or access denied.', 'error')
+        return redirect(url_for('advisor_home'))
+    
+    client = engagement.client
+    business = client.business
+    pathway_data = load_pathway(engagement.pathway_id)
+    
+    try:
+        context = build_storyboard_context(engagement_id)
+        storyboard = generate_storyboard(context)
+    except AIServiceError as e:
+        logging.error(f"Storyboard AI generation failed for engagement {engagement_id}: {str(e)}")
+        flash('Unable to generate Storyboard at this time. Please try again later.', 'error')
+        return redirect(url_for('client_detail', engagement_id=engagement_id))
+    except Exception as e:
+        logging.error(f"Storyboard generation failed for engagement {engagement_id}: {str(e)}")
+        flash('Unable to generate Storyboard at this time. Please try again later.', 'error')
+        return redirect(url_for('client_detail', engagement_id=engagement_id))
+    
+    return render_template('client_storyboard.html',
+                         engagement=engagement,
+                         client=client,
+                         business=business,
+                         pathway_data=pathway_data,
+                         storyboard=storyboard)
 
 @app.route('/advisor/client/<int:engagement_id>/add_guidance', methods=['POST'])
 @require_role('ADVISOR')
