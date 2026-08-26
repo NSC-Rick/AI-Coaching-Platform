@@ -75,8 +75,21 @@
             </div>
         </div>
         <div class="header-actions" style="display: flex; gap: 0.75rem; align-items: center;">
-            <a href="{{ url_for('client_storyboard', engagement_id=engagement.id) }}" class="btn btn-primary">Generate Client Storyboard</a>
+            <button type="button" class="btn btn-primary" id="generateStoryboardBtn" data-storyboard-url="{{ url_for('client_storyboard', engagement_id=engagement.id) }}">
+                Generate Client Storyboard
+            </button>
             <a href="{{ url_for('advisor_home') }}" class="btn btn-secondary">Back to Dashboard</a>
+        </div>
+
+        <div id="storyboardLoading" class="storyboard-loading" style="display: none;">
+            <div class="storyboard-loading-content">
+                <div class="storyboard-spinner"></div>
+                <div class="storyboard-loading-title">Generating Client Storyboard…</div>
+                <div class="storyboard-loading-subtitle">
+                    Reviewing the client's coaching record and building their journey summary.<br>
+                    This may take up to a minute.
+                </div>
+            </div>
         </div>
     </div>
 
@@ -544,4 +557,76 @@
         </details>
     </div>
 </div>
+
+<style>
+    .storyboard-loading {
+        margin-top: 1.5rem;
+        padding: 1.5rem;
+        display: none;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .storyboard-loading-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+        color: #666;
+    }
+
+    .storyboard-spinner {
+        width: 24px;
+        height: 24px;
+        border: 3px solid #e0e0e0;
+        border-top-color: #007bff;
+        border-radius: 50%;
+        animation: storyboard-spin 1s linear infinite;
+    }
+
+    @keyframes storyboard-spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .storyboard-loading-title {
+        font-weight: 600;
+        font-size: 1rem;
+        color: #333;
+        text-align: center;
+    }
+
+    .storyboard-loading-subtitle {
+        font-size: 0.9rem;
+        text-align: center;
+        max-width: 480px;
+        line-height: 1.4;
+    }
+
+    .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+</style>
+
+<script>
+    (function() {
+        const button = document.getElementById('generateStoryboardBtn');
+        const loader = document.getElementById('storyboardLoading');
+        if (!button || !loader) return;
+
+        button.addEventListener('click', function() {
+            button.disabled = true;
+            loader.style.display = 'flex';
+
+            const url = button.getAttribute('data-storyboard-url');
+
+            // Allow the UI update to paint before navigating to the
+            // existing synchronous Storyboard route.
+            setTimeout(function() {
+                window.location.href = url;
+            }, 50);
+        });
+    })();
+</script>
+
 {% endblock %}
