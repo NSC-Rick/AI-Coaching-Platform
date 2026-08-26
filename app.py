@@ -1692,21 +1692,7 @@ def cancel_voice_session(session_id):
 # ADVISOR AI GUIDE - Voice application support
 # ============================================================================
 
-@app.route('/advisor/guide')
-@require_role('ADVISOR')
-def advisor_guide():
-    """
-    Advisor AI Guide page.
-    
-    Provides a voice interface for advisors to talk to the existing
-    ElevenLabs Advisor AI Guide. This is separate from client coaching
-    and does not create or modify client coaching data.
-    """
-    advisor = current_user.advisor
-    return render_template('advisor_guide.html', advisor=advisor)
-
-
-@app.route('/advisor/voice/init', methods=['POST'])
+@app.route('/voice/advisor/init', methods=['POST'])
 @require_role('ADVISOR')
 def init_advisor_voice():
     """

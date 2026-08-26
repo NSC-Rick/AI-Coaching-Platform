@@ -5,6 +5,165 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}North Star Proficiency Builder{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+    {% if current_user.is_authenticated and current_user.role == 'ADVISOR' %}
+    <style>
+        .advisor-guide-widget {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            z-index: 1000;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .advisor-guide-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 0.75rem 1.25rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.35);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .advisor-guide-button:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(0, 123, 255, 0.45);
+        }
+        
+        .advisor-guide-panel {
+            position: absolute;
+            bottom: calc(100% + 0.75rem);
+            right: 0;
+            width: 320px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+            border: 1px solid #e0e0e0;
+            display: none;
+            overflow: hidden;
+        }
+        
+        .advisor-guide-panel.open {
+            display: block;
+        }
+        
+        .advisor-guide-header {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .advisor-guide-title {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .advisor-guide-subtitle {
+            margin: 0.25rem 0 0;
+            font-size: 0.8rem;
+            color: #666;
+        }
+        
+        .advisor-guide-close {
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            color: #666;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        
+        .advisor-guide-close:hover {
+            background: #e9ecef;
+            color: #333;
+        }
+        
+        .advisor-guide-body {
+            padding: 1.25rem;
+            text-align: center;
+        }
+        
+        .advisor-guide-status {
+            font-size: 0.95rem;
+            color: #333;
+            margin-bottom: 1.25rem;
+            min-height: 1.5rem;
+        }
+        
+        .advisor-guide-actions {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+        }
+        
+        .advisor-guide-actions button {
+            padding: 0.625rem 1.25rem;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        
+        .advisor-guide-actions .btn-start {
+            background: #007bff;
+            color: white;
+        }
+        
+        .advisor-guide-actions .btn-start:hover:not(:disabled) {
+            background: #0056b3;
+        }
+        
+        .advisor-guide-actions .btn-end {
+            background: white;
+            color: #dc3545;
+            border: 2px solid #dc3545;
+            display: none;
+        }
+        
+        .advisor-guide-actions .btn-end:hover:not(:disabled) {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .advisor-guide-actions button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .advisor-guide-error {
+            color: #dc3545;
+            font-size: 0.85rem;
+            margin-top: 0.75rem;
+        }
+        
+        @media (max-width: 640px) {
+            .advisor-guide-panel {
+                width: calc(100vw - 2rem);
+                right: -0.75rem;
+            }
+        }
+    </style>
+    {% endif %}
 </head>
 <body>
     <nav class="navbar">
@@ -36,6 +195,159 @@
             {% block content %}{% endblock %}
         </div>
     </main>
+
+    {% if current_user.is_authenticated and current_user.role == 'ADVISOR' %}
+    <div class="advisor-guide-widget" id="advisorGuideWidget">
+        <div class="advisor-guide-panel" id="advisorGuidePanel">
+            <div class="advisor-guide-header">
+                <div>
+                    <h4 class="advisor-guide-title">Advisor AI Guide</h4>
+                    <p class="advisor-guide-subtitle">Ask me about PB</p>
+                </div>
+                <button class="advisor-guide-close" id="advisorGuideClose" title="Close">×</button>
+            </div>
+            <div class="advisor-guide-body">
+                <div class="advisor-guide-status" id="advisorGuideStatus">Ready to help with PB questions.</div>
+                <div class="advisor-guide-error" id="advisorGuideError" style="display: none;"></div>
+                <div class="advisor-guide-actions">
+                    <button class="btn-start" id="advisorGuideStart">Start Conversation</button>
+                    <button class="btn-end" id="advisorGuideEnd">End Conversation</button>
+                </div>
+            </div>
+        </div>
+        <button class="advisor-guide-button" id="advisorGuideToggle">Advisor AI Guide</button>
+    </div>
+
+    <script type="module">
+        import { startVoiceConversation, endVoiceConversation } from '/static/js/voice-client.js';
+        
+        const widget = document.getElementById('advisorGuideWidget');
+        const panel = document.getElementById('advisorGuidePanel');
+        const toggle = document.getElementById('advisorGuideToggle');
+        const close = document.getElementById('advisorGuideClose');
+        const startBtn = document.getElementById('advisorGuideStart');
+        const endBtn = document.getElementById('advisorGuideEnd');
+        const status = document.getElementById('advisorGuideStatus');
+        const error = document.getElementById('advisorGuideError');
+        
+        let conversation = null;
+        
+        function updateStatus(text) {
+            status.textContent = text;
+        }
+        
+        function showError(message) {
+            error.textContent = message;
+            error.style.display = 'block';
+        }
+        
+        function clearError() {
+            error.textContent = '';
+            error.style.display = 'none';
+        }
+        
+        function togglePanel() {
+            panel.classList.toggle('open');
+        }
+        
+        function resetButtons() {
+            startBtn.style.display = 'inline-block';
+            startBtn.disabled = false;
+            endBtn.style.display = 'none';
+            endBtn.disabled = false;
+        }
+        
+        async function startGuideSession() {
+            try {
+                clearError();
+                startBtn.disabled = true;
+                updateStatus('Requesting microphone access...');
+                
+                await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                updateStatus('Initializing session...');
+                
+                const response = await fetch('/voice/advisor/init', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || 'Failed to initialize session');
+                }
+                
+                const data = await response.json();
+                
+                updateStatus('Connecting to guide...');
+                
+                conversation = await startVoiceConversation({
+                    signedUrl: data.signed_url,
+                    config: data.config,
+                    dynamicVariables: {
+                        advisor_name: data.advisor_name
+                    },
+                    
+                    onConnect: () => {
+                        updateStatus('Connected');
+                        startBtn.style.display = 'none';
+                        endBtn.style.display = 'inline-block';
+                        endBtn.disabled = false;
+                    },
+                    
+                    onDisconnect: () => {
+                        updateStatus('Conversation ended');
+                        resetButtons();
+                        conversation = null;
+                    },
+                    
+                    onError: (err) => {
+                        showError('Connection error: ' + (err?.message || 'Unknown error'));
+                        updateStatus('Connection error');
+                        resetButtons();
+                        conversation = null;
+                    },
+                    
+                    onModeChange: (mode) => {
+                        if (mode?.mode === 'speaking') {
+                            updateStatus('Guide is speaking...');
+                        } else {
+                            updateStatus('Listening...');
+                        }
+                    }
+                });
+                
+            } catch (err) {
+                showError('Failed to start: ' + err.message);
+                updateStatus('Ready to help with PB questions.');
+                startBtn.disabled = false;
+            }
+        }
+        
+        async function endGuideSession() {
+            if (!conversation) return;
+            
+            endBtn.disabled = true;
+            updateStatus('Ending conversation...');
+            
+            try {
+                await endVoiceConversation(conversation);
+                conversation = null;
+            } catch (err) {
+                showError('Error ending conversation: ' + err.message);
+                conversation = null;
+                resetButtons();
+            }
+        }
+        
+        toggle.addEventListener('click', togglePanel);
+        close.addEventListener('click', togglePanel);
+        startBtn.addEventListener('click', startGuideSession);
+        endBtn.addEventListener('click', endGuideSession);
+    </script>
+    {% endif %}
 
     <footer class="footer">
         <div class="container">
