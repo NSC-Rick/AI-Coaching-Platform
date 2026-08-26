@@ -257,6 +257,36 @@
             endBtn.disabled = false;
         }
         
+        async function prepareAudioOutput() {
+            // The ElevenLabs SDK creates its own audio context, but in many
+            // browsers that context starts in the 'suspended' state until a
+            // user gesture unlocks it. This routine creates and resumes a
+            // temporary audio context and plays an inaudible 1ms tone to make
+            // sure the browser's audio output pipeline is fully ready before
+            // the SDK begins its first utterance. This is the smallest
+            // non-timeout workaround for the SDK not exposing a dedicated
+            // audio-ready event.
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                
+                const audioCtx = new AudioContext();
+                if (audioCtx.state === 'suspended') {
+                    await audioCtx.resume();
+                }
+                
+                const oscillator = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                gain.gain.value = 0; // inaudible
+                oscillator.connect(gain);
+                gain.connect(audioCtx.destination);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.001);
+            } catch (e) {
+                console.warn('[ADVISOR GUIDE] AudioContext prepare failed', e);
+            }
+        }
+        
         async function startGuideSession() {
             try {
                 clearError();
@@ -264,6 +294,8 @@
                 updateStatus('Requesting microphone access...');
                 
                 await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                await prepareAudioOutput();
                 
                 updateStatus('Initializing session...');
                 
