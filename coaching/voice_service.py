@@ -28,16 +28,16 @@ class VoiceService:
     This service provides the server-side support for secure authentication and context.
     """
     
-    def __init__(self):
+    def __init__(self, agent_id=None):
         """Initialize the voice service with ElevenLabs configuration."""
         self.api_key = os.environ.get('ELEVENLABS_API_KEY')
-        self.agent_id = os.environ.get('ELEVENLABS_AGENT_ID')
+        self.agent_id = agent_id or os.environ.get('ELEVENLABS_AGENT_ID')
         self.api_base = 'https://api.elevenlabs.io/v1'
         
         if not self.api_key:
             raise ValueError("ELEVENLABS_API_KEY environment variable is required")
         if not self.agent_id:
-            raise ValueError("ELEVENLABS_AGENT_ID environment variable is required")
+            raise ValueError("ELEVENLABS_AGENT_ID or advisor agent ID is required")
     
     def generate_signed_url(self, session_id: Optional[str] = None, engagement_id: Optional[int] = None) -> Dict[str, str]:
         """
@@ -385,8 +385,9 @@ Remember what has been discussed and build on previous conversations naturally."
         }
 
 
-# Singleton instance
+# Singleton instances
 _voice_service = None
+_advisor_voice_service = None
 
 
 def get_voice_service() -> VoiceService:
@@ -400,3 +401,19 @@ def get_voice_service() -> VoiceService:
     if _voice_service is None:
         _voice_service = VoiceService()
     return _voice_service
+
+
+def get_advisor_voice_service() -> VoiceService:
+    """
+    Get or create the VoiceService singleton for the Advisor AI Guide.
+    
+    Returns:
+        VoiceService: Voice service instance configured for the advisor agent
+    """
+    global _advisor_voice_service
+    if _advisor_voice_service is None:
+        advisor_agent_id = os.environ.get('ELEVENLABS_ADVISOR_AGENT_ID')
+        if not advisor_agent_id:
+            raise ValueError("ELEVENLABS_ADVISOR_AGENT_ID environment variable is required")
+        _advisor_voice_service = VoiceService(agent_id=advisor_agent_id)
+    return _advisor_voice_service

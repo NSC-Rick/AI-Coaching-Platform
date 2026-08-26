@@ -14,7 +14,7 @@ from coaching.validator import ExtractionValidator, ValidationError
 from coaching.persistence import apply_extraction_updates, PersistenceError
 from coaching.advisor_helpers import build_coaching_snapshot, categorize_commitments, categorize_risks, build_recent_developments_timeline, determine_advisor_attention_status
 from coaching.storyboard import build_storyboard_context, generate_storyboard
-from coaching.voice_service import get_voice_service
+from coaching.voice_service import get_voice_service, get_advisor_voice_service
 from background_processor import trigger_session_processing
 
 logging.basicConfig(level=logging.INFO)
@@ -1687,6 +1687,58 @@ def cancel_voice_session(session_id):
     except Exception as e:
         logging.error(f"Failed to cancel voice session {session_id}: {str(e)}")
         return jsonify({'error': 'Failed to cancel session'}), 500
+
+# ============================================================================
+# ADVISOR AI GUIDE - Voice application support
+# ============================================================================
+
+@app.route('/advisor/guide')
+@require_role('ADVISOR')
+def advisor_guide():
+    """
+    Advisor AI Guide page.
+    
+    Provides a voice interface for advisors to talk to the existing
+    ElevenLabs Advisor AI Guide. This is separate from client coaching
+    and does not create or modify client coaching data.
+    """
+    advisor = current_user.advisor
+    return render_template('advisor_guide.html', advisor=advisor)
+
+
+@app.route('/advisor/voice/init', methods=['POST'])
+@require_role('ADVISOR')
+def init_advisor_voice():
+    """
+    Initialize an Advisor AI Guide voice conversation.
+    
+    Returns a signed URL and minimal config for the ElevenLabs
+    Advisor AI Guide agent. No session record is created and no
+    client coaching context is passed.
+    """
+    try:
+        voice_service = get_advisor_voice_service()
+    except Exception as e:
+        logging.error(f"Advisor voice service initialization failed: {str(e)}")
+        return jsonify({'error': 'Advisor voice service not available'}), 503
+    
+    try:
+        signed_url_data = voice_service.generate_signed_url()
+    except Exception as e:
+        logging.error(f"Failed to generate advisor signed URL: {str(e)}")
+        return jsonify({'error': 'Failed to initialize advisor voice session'}), 500
+    
+    config = {
+        'agent_id': voice_service.agent_id,
+        'user_id': current_user.id
+    }
+    
+    return jsonify({
+        'signed_url': signed_url_data['signed_url'],
+        'config': config,
+        'advisor_name': current_user.advisor.first_name
+    }), 200
+
 
 @app.cli.command('init-db')
 def init_db():
