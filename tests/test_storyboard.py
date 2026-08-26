@@ -16,7 +16,10 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 from app import app
 from models import db, User, Advisor, Client, Business, Engagement, PathwayState
-from models import Commitment, Risk, SignificantEvent, CoachingObservation, Session, AdvisorGuidance
+from models import (
+    Commitment, Risk, SignificantEvent, CoachingObservation,
+    Session, AdvisorGuidance, AdvisorAttention, LearningRecord
+)
 from coaching.storyboard import build_storyboard_context, build_storyboard_prompt, generate_storyboard
 from coaching.ai_service import AIServiceError
 
@@ -49,6 +52,7 @@ class TestStoryboardContext(unittest.TestCase):
         self.advisor = Advisor(user_id=advisor_user.id, first_name='Ronda', last_name='Advisor')
         db.session.add(self.advisor)
         db.session.flush()
+        self.advisor_id = self.advisor.id
 
         client_user = User(email='client@test.com', role='CLIENT', active=True)
         client_user.set_password('test123')
@@ -231,6 +235,102 @@ class TestStoryboardContext(unittest.TestCase):
     def test_storyboard_prompt_requires_advisor_friendly_dates(self):
         prompt = build_storyboard_prompt()
         self.assertIn('Aug. 23, 2026', prompt)
+
+    def test_mature_engagement_context_is_bounded(self):
+        with app.app_context():
+            advisor_id = self.advisor_id
+
+            # Add a large volume of routine historical records.
+            for i in range(20):
+                db.session.add(Commitment(
+                    engagement_id=self.engagement_id,
+                    description=f'Completed action {i}',
+                    status='completed',
+                    completed_at=datetime.utcnow() - timedelta(days=i)
+                ))
+            for i in range(5):
+                db.session.add(Commitment(
+                    engagement_id=self.engagement_id,
+                    description=f'Open action {i}',
+                    status='open'
+                ))
+            for i in range(15):
+                db.session.add(Session(
+                    engagement_id=self.engagement_id,
+                    started_at=datetime.utcnow() - timedelta(days=i),
+                    ended_at=datetime.utcnow() - timedelta(days=i) + timedelta(minutes=10),
+                    interaction_type='text',
+                    status='completed',
+                    summary=f'Session summary {i}',
+                    processing_status='complete'
+                ))
+            for i in range(15):
+                db.session.add(CoachingObservation(
+                    engagement_id=self.engagement_id,
+                    observation=f'Historical observation {i}',
+                    importance='normal',
+                    status='resolved'
+                ))
+            for i in range(15):
+                db.session.add(AdvisorAttention(
+                    engagement_id=self.engagement_id,
+                    title=f'Resolved attention {i}',
+                    description='Resolved',
+                    priority='normal',
+                    status='resolved'
+                ))
+            for i in range(15):
+                db.session.add(AdvisorGuidance(
+                    engagement_id=self.engagement_id,
+                    advisor_id=advisor_id,
+                    guidance=f'Guidance {i}',
+                    status='active'
+                ))
+            for i in range(15):
+                db.session.add(Risk(
+                    engagement_id=self.engagement_id,
+                    title=f'Resolved risk {i}',
+                    description='Resolved',
+                    severity='moderate',
+                    status='resolved'
+                ))
+            for i in range(15):
+                db.session.add(LearningRecord(
+                    engagement_id=self.engagement_id,
+                    resource_id=f'RS-R00{i}',
+                    status='completed'
+                ))
+            db.session.commit()
+
+            context = build_storyboard_context(self.engagement_id)
+
+        # Bounds are preserved (existing open commitment + new open commitments + 10 completed).
+        self.assertLessEqual(len(context['commitments']), 16)
+        self.assertGreaterEqual(len(context['commitments']), 15)
+        self.assertEqual(len(context['sessions']), 10)
+        self.assertEqual(len(context['coaching_observations']), 1 + 5)  # 1 active + 5 resolved
+        self.assertEqual(len(context['advisor_attention']), 0 + 5)  # no open + 5 resolved
+        self.assertEqual(len(context['advisor_guidance']), 10)
+        self.assertEqual(len(context['risks']), 1 + 10)  # 1 open + 10 resolved
+        self.assertEqual(len(context['learning_records']), 10)
+
+    def test_generate_storyboard_uses_compact_json_and_hides_engagement_id(self):
+        mock_ai = MagicMock()
+        mock_ai.generate_coaching_response.return_value = '## 1. Starting Situation\n\nTest.'
+
+        with app.app_context():
+            context = build_storyboard_context(self.engagement_id)
+            generate_storyboard(context, ai_service=mock_ai)
+
+        call_args = mock_ai.generate_coaching_response.call_args.kwargs
+        user_content = call_args['messages'][0]['content']
+
+        # Compact JSON: no spaces after separators.
+        self.assertIn('","', user_content)
+        self.assertNotIn('": ', user_content)
+
+        # Internal engagement_id key is not exposed to the model prompt.
+        self.assertNotIn('"engagement_id"', user_content)
 
     def test_generate_storyboard_calls_ai_service(self):
         mock_ai = MagicMock()
