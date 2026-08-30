@@ -131,6 +131,10 @@ class ExtractionValidator:
             if 'source' in commitment:
                 if commitment['source'] not in self.VALID_SOURCES:
                     self.errors.append(f"new_commitments[{i}].source invalid")
+            
+            if 'status' in commitment:
+                if commitment['status'] not in self.VALID_COMMITMENT_STATUSES:
+                    self.errors.append(f"new_commitments[{i}].status invalid: {commitment['status']}")
     
     def _validate_commitment_updates(self, updates: Any):
         """Validate commitment update proposals."""

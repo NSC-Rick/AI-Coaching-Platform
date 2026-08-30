@@ -36,15 +36,38 @@ def build_coaching_system_prompt(context: dict, pathway_data: dict) -> str:
         current_day=current_day
     )
     
+    pathway_info = runtime_context['pathway']
+    domain = pathway_info.get('domain') or ''
+    purpose = pathway_info.get('purpose') or ''
+    core_rule = pathway_info.get('core_rule') or ''
+    development_dimensions = pathway_info.get('development_dimensions', [])
+
+    dimensions_text = ''
+    if development_dimensions:
+        dimensions_lines = []
+        for dim in development_dimensions:
+            name = dim.get('name', '')
+            description = dim.get('description', '')
+            if name:
+                dimensions_lines.append(f"  - {name}: {description.strip() if description else ''}")
+        dimensions_text = '\n'.join(dimensions_lines)
+
     prompt_parts.append(f"""You are an AI coaching assistant supporting {client_name}, who owns {business_name}.
 
-You are working within the {pathway_name} pathway.
-
 CURRENT POSITION:
-- Stage: {current_stage}
+- Pathway: {pathway_name}
+- Stage: {current_stage} ({current_stage_id})
 - Day: {current_day}
 - Current Focus: {current_focus}
-- Current Priorities: {current_priorities}""")
+- Current Priorities: {current_priorities}
+
+PATHWAY:
+- Name: {pathway_name}
+- Domain: {domain or 'Not specified'}
+- Purpose: {purpose or 'Not specified'}
+- Core Rule: {core_rule or 'Not specified'}
+- Development Dimensions:
+{dimensions_text}""")
     
     prompt_parts.append("""
 
@@ -126,6 +149,10 @@ ACTIVE ADVISOR GUIDANCE (HIGH PRIORITY):
 
 You must respect and emphasize this advisor direction in your coaching.""")
     
+    pathway_wide_guidance = runtime_context['coaching'].get('pathway_wide_guidance', '')
+    if pathway_wide_guidance:
+        prompt_parts.append(f"\n\nPATHWAY-WIDE COACHING GUIDANCE:\n{pathway_wide_guidance}")
+
     if runtime_context['coaching']['stage_guidance']:
         prompt_parts.append(f"\n\nPATHWAY-SPECIFIC COACHING GUIDANCE:\n{runtime_context['coaching']['stage_guidance']}")
     
@@ -251,17 +278,18 @@ def extract_stage_guidance(guidance_text: str, stage_id: str) -> str:
 
 
 def extract_guardrail_summary(guardrails_text: str) -> str:
-    """Extract key guardrails from the guardrails document."""
-    lines = guardrails_text.split('\n')
-    summary_lines = []
-    
-    for line in lines:
-        if line.startswith('## RS-G'):
-            summary_lines.append(line.replace('##', '').strip())
-        elif line.startswith('**Trigger:**') or line.startswith('**Boundary:**'):
-            summary_lines.append(line)
-    
-    return '\n'.join(summary_lines[:20])
+    """
+    Format pathway guardrails for inclusion in the system prompt.
+
+    The guardrails file is already the authoritative boundary document, so
+    the whole content is returned (cleaned of separator noise). This works
+    for any pathway regardless of guardrail identifier convention.
+    """
+    if not guardrails_text:
+        return ''
+
+    cleaned = guardrails_text.replace('\n---\n', '\n').strip()
+    return cleaned
 
 
 def build_extraction_prompt() -> str:

@@ -95,11 +95,28 @@ class PathwayAdapter:
             'status': manifest.get('status'),
             'domain': manifest.get('domain'),  # None for legacy Recovery
             'purpose': manifest.get('purpose'),
+            'core_rule': manifest.get('core_rule'),
             'target_user': manifest.get('target_user'),  # None for legacy
             'entry_context': manifest.get('entry_context'),  # None for legacy
             'expected_outcome': manifest.get('expected_outcome'),  # None for legacy
-            'default_duration_days': manifest.get('default_duration_days')
+            'default_duration_days': manifest.get('default_duration_days'),
+            'development_dimensions': cls._normalize_development_dimensions(manifest)
         }
+
+    @classmethod
+    def _normalize_development_dimensions(cls, manifest):
+        """Normalize development dimensions when supplied by the pathway."""
+        dimensions = manifest.get('development_dimensions', [])
+        if not dimensions:
+            return []
+        normalized = []
+        for dim in dimensions:
+            normalized.append({
+                'dimension_id': dim.get('dimension_id'),
+                'name': dim.get('name'),
+                'description': dim.get('description')
+            })
+        return normalized
 
     @classmethod
     def _resolve_stage(cls, manifest, current_stage_id):
@@ -130,9 +147,60 @@ class PathwayAdapter:
         return {
             'methodology': package.get('methodology', ''),
             'guidance': guidance_text,
+            'pathway_wide_guidance': cls._extract_pathway_wide_guidance(guidance_text),
             'stage_guidance': cls._extract_stage_guidance(guidance_text, current_stage_id),
             'guardrails': package.get('guardrails', '')
         }
+
+    @classmethod
+    def _extract_pathway_wide_guidance(cls, guidance_text):
+        """
+        Return coaching guidance with the stage-specific block removed.
+
+        This keeps pathway-wide posture, behavior rules, privacy guidance,
+        and other universal coaching instructions separate from the
+        current-stage guidance.
+        """
+        if not guidance_text:
+            return ''
+
+        start, end = cls._locate_stage_specific_block(guidance_text)
+        if start is None:
+            return guidance_text.strip()
+
+        before = guidance_text[:start].rstrip()
+        after = guidance_text[end:].lstrip() if end is not None else ''
+
+        if before and after:
+            return f"{before}\n\n{after}".strip()
+        return (before or after).strip()
+
+    @classmethod
+    def _locate_stage_specific_block(cls, guidance_text):
+        """
+        Locate the stage-specific section within coaching_guidance.md.
+
+        Returns (start, end) character offsets, where start is the
+        beginning of the '## Stage-Specific Guidance' heading and end is
+        the start of the next '## ' heading (or None if it runs to EOF).
+        """
+        if not guidance_text:
+            return None, None
+
+        import re
+        pattern = re.compile(r'^##\s+Stage[-\s]Specific Guidance\s*$', re.IGNORECASE | re.MULTILINE)
+        match = pattern.search(guidance_text)
+        if not match:
+            return None, None
+
+        start = match.start()
+        next_heading = re.search(r'^##\s', guidance_text[match.end():], re.MULTILINE)
+        if next_heading:
+            end = match.end() + next_heading.start()
+        else:
+            end = None
+
+        return start, end
 
     @classmethod
     def _extract_stage_guidance(cls, guidance_text, stage_id):
@@ -140,17 +208,23 @@ class PathwayAdapter:
         if not stage_id or not guidance_text:
             return ''
 
-        lines = guidance_text.split('\n')
+        start, end = cls._locate_stage_specific_block(guidance_text)
+        if start is not None:
+            block = guidance_text[start:end] if end is not None else guidance_text[start:]
+        else:
+            block = guidance_text
+
+        lines = block.split('\n')
         relevant_lines = []
         capturing = False
 
         for line in lines:
-            if stage_id in line and ('##' in line or 'Stage' in line):
-                capturing = True
-                continue
-
-            if capturing:
-                if line.startswith('##') and stage_id not in line:
+            if not capturing:
+                if stage_id in line and line.lstrip().startswith('#'):
+                    capturing = True
+                    continue
+            else:
+                if line.lstrip().startswith('#') and stage_id not in line:
                     break
                 relevant_lines.append(line)
 
