@@ -1,6 +1,7 @@
 import os
 import yaml
 import json
+import logging
 from pathlib import Path
 
 class PathwayLoadError(Exception):
@@ -117,12 +118,11 @@ def is_pathway_runtime_ready(pathway_id):
     Determine whether a registered pathway has an executable package.
 
     Returns True if load_pathway succeeds and validation passes.
-    Returns False for unknown or unloadable pathway IDs.
+    Returns False for any load or validation failure.
     """
     try:
         load_pathway(pathway_id)
         return True
-    except PathwayLoadError:
-        return False
-    except PathwayValidationError:
+    except Exception as e:
+        logging.info(f"Pathway {pathway_id} is not runtime ready: {type(e).__name__}: {e}")
         return False

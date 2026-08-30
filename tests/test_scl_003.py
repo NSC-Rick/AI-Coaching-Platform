@@ -178,14 +178,29 @@ class TestSCL003AssignmentFlow(unittest.TestCase):
             domain_names = [a.domain.name for a in rick.domain_access]
             self.assertIn('Organizational Change Management', domain_names)
 
-    def test_assignment_new_shows_senior_change_leadership(self):
+    def test_get_defaults_to_first_advisor_and_shows_their_eligible_pathways(self):
         self._login_admin()
         response = self.client.get(f'/admin/assignments/new/{self.client_id}')
         self.assertEqual(response.status_code, 200)
 
         html = response.get_data(as_text=True)
-        self.assertIn('Senior Change Leadership', html)
+        # Ronda is the first advisor and has Small Business access
         self.assertIn('Stabilization and Recovery', html)
+        self.assertNotIn('Senior Change Leadership', html)
+
+    def test_advisor_rick_dropdown_shows_senior_change_leadership(self):
+        self._login_admin()
+        # POST with Rick but no pathway triggers a re-render with Rick's eligible pathways
+        response = self.client.post(f'/admin/assignments/new/{self.client_id}', data={
+            'advisor_id': self.rick_id,
+            'pathway_id': ''
+        }, follow_redirects=True)
+
+        self.assertEqual(response.status_code, 200)
+
+        html = response.get_data(as_text=True)
+        self.assertIn('Senior Change Leadership', html)
+        self.assertNotIn('Stabilization and Recovery', html)
 
     def test_admin_can_assign_senior_change_leadership_to_rick(self):
         self._login_admin()
@@ -304,9 +319,13 @@ class TestSCL003AssignmentFlow(unittest.TestCase):
     def test_assignment_dropdown_excludes_catalog_only_ocm_pathways(self):
         self._login_admin()
 
-        # Rick has OCM access. His eligible pathways should be only PATHWAY-002
-        # because CM-001/002/003 have no runtime package.
-        response = self.client.get(f'/admin/assignments/new/{self.client_id}')
+        # Rick has OCM access. POST with no pathway re-renders with Rick's eligible pathways.
+        # Only PATHWAY-002 should appear because CM-001/002/003 have no runtime package.
+        response = self.client.post(f'/admin/assignments/new/{self.client_id}', data={
+            'advisor_id': self.rick_id,
+            'pathway_id': ''
+        }, follow_redirects=True)
+
         html = response.get_data(as_text=True)
 
         self.assertIn('Senior Change Leadership', html)

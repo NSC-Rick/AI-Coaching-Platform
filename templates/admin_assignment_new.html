@@ -19,7 +19,7 @@
                 <label for="advisor_id">Advisor</label>
                 <select id="advisor_id" name="advisor_id" required>
                     {% for a in advisors %}
-                    <option value="{{ a.id }}">{{ a.first_name }} {{ a.last_name }} ({{ a.user.email }})</option>
+                    <option value="{{ a.id }}"{% if selected_advisor and selected_advisor.id == a.id %} selected{% endif %}>{{ a.first_name }} {{ a.last_name }} ({{ a.user.email }})</option>
                     {% endfor %}
                 </select>
             </div>

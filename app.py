@@ -541,8 +541,8 @@ def admin_assignment_new(client_id):
         pathways = base_query.order_by(Pathway.name).all()
         return [p for p in pathways if is_pathway_runtime_ready(p.pathway_id)]
     
-    available_pathways = get_advisor_pathways()
-    selected_advisor = None
+    selected_advisor = advisors[0] if advisors else None
+    available_pathways = get_advisor_pathways(selected_advisor)
     
     if request.method == 'POST':
         advisor_id = request.form.get('advisor_id', type=int)
@@ -554,7 +554,8 @@ def admin_assignment_new(client_id):
             return render_template('admin_assignment_new.html',
                                  client=client,
                                  advisors=advisors,
-                                 available_pathways=available_pathways)
+                                 available_pathways=available_pathways,
+                                 selected_advisor=selected_advisor)
         
         selected_advisor = advisor
         available_pathways = get_advisor_pathways(advisor)
@@ -566,7 +567,8 @@ def admin_assignment_new(client_id):
             return render_template('admin_assignment_new.html',
                                  client=client,
                                  advisors=advisors,
-                                 available_pathways=available_pathways)
+                                 available_pathways=available_pathways,
+                                 selected_advisor=selected_advisor)
         
         try:
             pathway_data = load_pathway(pathway_record.pathway_id)
@@ -579,7 +581,8 @@ def admin_assignment_new(client_id):
             return render_template('admin_assignment_new.html',
                                  client=client,
                                  advisors=advisors,
-                                 available_pathways=available_pathways)
+                                 available_pathways=available_pathways,
+                                 selected_advisor=selected_advisor)
         
         try:
             engagement = Engagement(
@@ -612,7 +615,8 @@ def admin_assignment_new(client_id):
     return render_template('admin_assignment_new.html',
                          client=client,
                          advisors=advisors,
-                         available_pathways=available_pathways)
+                         available_pathways=available_pathways,
+                         selected_advisor=selected_advisor)
 
 
 @app.route('/admin/assignments/<int:engagement_id>/advisor', methods=['GET', 'POST'])
