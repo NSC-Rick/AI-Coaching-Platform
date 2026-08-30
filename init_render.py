@@ -320,6 +320,56 @@ def init_render_database():
             
             print("  ✓ Created client B: michael@example.com (Chen's Bakery)")
             
+            # Create Client C (Rick) — Senior Change Leadership field experiment
+            client_c_user = User(
+                email='rick@example.com',
+                role='CLIENT',
+                active=True
+            )
+            client_c_user.set_password('client123')
+            db.session.add(client_c_user)
+            db.session.flush()
+            
+            client_c = Client(
+                user_id=client_c_user.id,
+                first_name='Rick',
+                last_name='Practitioner'
+            )
+            db.session.add(client_c)
+            db.session.flush()
+            
+            business_c = Business(
+                client_id=client_c.id,
+                business_name='Senior Change Leadership Practice',
+                industry='Professional Services',
+                business_description='Experienced Change Management practitioner participating in the Senior Change Leadership field experiment.',
+                current_situation_summary='Preparing for a 30-day structured reflection and professional-development coaching experiment.'
+            )
+            db.session.add(business_c)
+            
+            engagement_c = Engagement(
+                client_id=client_c.id,
+                advisor_id=advisor.id,
+                pathway_id='PATHWAY-002',
+                pathway_version='0.1',
+                status='active',
+                start_date=date(2026, 9, 1),
+                target_end_date=date(2026, 9, 30)
+            )
+            db.session.add(engagement_c)
+            db.session.flush()
+            
+            pathway_state_c = PathwayState(
+                engagement_id=engagement_c.id,
+                current_stage_id='SCL-01',
+                current_day=1,
+                current_focus='Establish baseline for September Senior Change Leadership field experiment',
+                current_priority_summary='Complete conversational baseline, identify strengths and development objectives, and begin Stage 1 reflection'
+            )
+            db.session.add(pathway_state_c)
+            
+            print("  ✓ Created client C: rick@example.com (Senior Change Leadership)")
+            
             # Commit all seed data
             db.session.commit()
             print()
@@ -348,6 +398,10 @@ def init_render_database():
         print()
         print("Client B (Chen's Bakery):")
         print("  Email: michael@example.com")
+        print("  Password: client123")
+        print()
+        print("Client C (Senior Change Leadership field experiment):")
+        print("  Email: rick@example.com")
         print("  Password: client123")
         print()
         print("=" * 60)

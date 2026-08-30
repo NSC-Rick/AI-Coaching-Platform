@@ -1,0 +1,46 @@
+{
+  "resources": [
+    {
+      "resource_id": "SCL-R001",
+      "stage_id": "SCL-01",
+      "topic": "baseline_reflection",
+      "title": "Establishing Your Professional Baseline",
+      "resource_type": "guide",
+      "location": null,
+      "duration": "5-8 minutes",
+      "description": "A short guide to help an experienced Change Management practitioner reflect on their current role, strengths, and development objectives before coaching begins.",
+      "learning_objective": "Help the practitioner articulate their current professional baseline across the six development dimensions.",
+      "when_to_recommend": [
+        "Practitioner is beginning the pathway",
+        "Stage SCL-01 is active",
+        "Practitioner asks how to prepare for coaching"
+      ],
+      "follow_up_questions": [
+        "Which development dimension feels most relevant to your current work?",
+        "What would meaningful growth look like in that area?"
+      ],
+      "status": "placeholder"
+    },
+    {
+      "resource_id": "SCL-R002",
+      "stage_id": "SCL-02",
+      "topic": "situation_observation",
+      "title": "Observing Your Practice in Real Time",
+      "resource_type": "guide",
+      "location": null,
+      "duration": "5-8 minutes",
+      "description": "A guide to help the practitioner bring real workplace situations into coaching and reflect on situation, interpretation, approach, behavior, and outcome.",
+      "learning_objective": "Help the practitioner structure a real workplace observation for coaching reflection.",
+      "when_to_recommend": [
+        "Practitioner is in SCL-02",
+        "Practitioner asks how to describe a situation for coaching",
+        "A significant workplace situation has occurred"
+      ],
+      "follow_up_questions": [
+        "What did you notice about your own approach in that situation?",
+        "How did you interpret what was happening before you acted?"
+      ],
+      "status": "placeholder"
+    }
+  ]
+}

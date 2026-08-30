@@ -13,7 +13,8 @@ def load_pathway(pathway_id):
     base_path = Path(__file__).parent.parent / 'pathways'
     
     pathway_map = {
-        'PATHWAY-001': 'recovery_stabilization'
+        'PATHWAY-001': 'recovery_stabilization',
+        'PATHWAY-002': 'senior_change_leadership'
     }
     
     if pathway_id not in pathway_map:

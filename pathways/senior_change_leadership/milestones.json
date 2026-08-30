@@ -1,0 +1,76 @@
+{
+  "milestones": [
+    {
+      "milestone_id": "SCL-M001",
+      "stage_id": "SCL-01",
+      "title": "Current professional role and context described",
+      "description": "The practitioner has described their current role, context, and professional situation."
+    },
+    {
+      "milestone_id": "SCL-M002",
+      "stage_id": "SCL-01",
+      "title": "Initial self-reflection across development dimensions",
+      "description": "The practitioner has reflected on their perceived strengths and objectives across the six development dimensions."
+    },
+    {
+      "milestone_id": "SCL-M003",
+      "stage_id": "SCL-02",
+      "title": "First real workplace situation brought to coaching",
+      "description": "The practitioner has described a real Change Management situation using the observation sequence."
+    },
+    {
+      "milestone_id": "SCL-M004",
+      "stage_id": "SCL-02",
+      "title": "Reflection on decision, behavior, and outcome",
+      "description": "The practitioner has reflected on their interpretation, approach, behavior, and the outcome of a situation."
+    },
+    {
+      "milestone_id": "SCL-M005",
+      "stage_id": "SCL-03",
+      "title": "Multiple observations connected",
+      "description": "The practitioner has connected two or more observations and explored whether a pattern is emerging."
+    },
+    {
+      "milestone_id": "SCL-M006",
+      "stage_id": "SCL-03",
+      "title": "Pattern hypothesis validated collaboratively",
+      "description": "A pattern hypothesis has been explored and validated or adjusted with the practitioner."
+    },
+    {
+      "milestone_id": "SCL-M007",
+      "stage_id": "SCL-04",
+      "title": "Focused development area selected",
+      "description": "The practitioner has selected one focused development area based on observed patterns."
+    },
+    {
+      "milestone_id": "SCL-M008",
+      "stage_id": "SCL-04",
+      "title": "Small real-work experiment committed",
+      "description": "The practitioner has committed to a small, real-world experiment that can be applied in the workplace."
+    },
+    {
+      "milestone_id": "SCL-M009",
+      "stage_id": "SCL-05",
+      "title": "Experiment revisited and outcome described",
+      "description": "The practitioner has revisited their experiment and described what happened."
+    },
+    {
+      "milestone_id": "SCL-M010",
+      "stage_id": "SCL-05",
+      "title": "Learning recorded and next action decided",
+      "description": "The practitioner has identified what they learned and decided whether to retain, adapt, or abandon the approach."
+    },
+    {
+      "milestone_id": "SCL-M011",
+      "stage_id": "SCL-06",
+      "title": "Accumulated experiences reviewed",
+      "description": "The practitioner has reviewed accumulated experiences to identify demonstrated development."
+    },
+    {
+      "milestone_id": "SCL-M012",
+      "stage_id": "SCL-06",
+      "title": "Next development priority established",
+      "description": "The practitioner has updated development priorities and established the next deliberate-practice focus."
+    }
+  ]
+}

@@ -1,0 +1,136 @@
+pathway_id: PATHWAY-002
+slug: senior_change_leadership
+name: Senior Change Leadership
+version: "0.1"
+status: active
+domain: Change Management
+target_user: "Experienced Change Management practitioners seeking structured professional development"
+default_duration_days: 30
+
+purpose: >
+  Help experienced Change Management practitioners develop through structured
+  reflection on real work. The pathway helps the practitioner examine situations,
+  decisions, behaviors, and outcomes; recognize patterns in their practice;
+  deliberately experiment with alternative approaches; and build evidence of
+  professional growth over time.
+
+core_rule: >
+  This is a professional-development pathway, not a Change Management
+  task-management pathway. The Coach develops the practitioner, not the
+  deliverable.
+
+development_dimensions:
+  - dimension_id: strategic_change_thinking
+    name: Strategic Change Thinking
+    description: >
+      Understand the larger organizational system, diagnose before acting,
+      distinguish symptoms from underlying change issues, connect Change
+      Management activity to business outcomes, and operate beyond deliverable
+      execution.
+  - dimension_id: stakeholder_influence
+    name: Stakeholder Influence & Alignment
+    description: >
+      Understand stakeholder perspectives, recognize competing interests, build
+      alignment, influence without formal authority, navigate resistance, and
+      adapt approaches based on stakeholder needs.
+  - dimension_id: executive_communication
+    name: Executive Communication
+    description: >
+      Frame complex issues clearly, communicate at the appropriate level, adapt
+      messaging to audience, make concise recommendations, and demonstrate
+      executive presence.
+  - dimension_id: facilitation_presence
+    name: Facilitation & Leadership Presence
+    description: >
+      Lead productive conversations, ask effective questions, create clarity
+      from ambiguity, facilitate alignment, manage tension constructively, and
+      listen before solving.
+  - dimension_id: applied_change_judgment
+    name: Applied Change Judgment
+    description: >
+      Select interventions appropriate to the situation, apply methodology
+      pragmatically, recognize when additional diagnosis is required, balance
+      strategy with execution, and make sound judgments when the path is unclear.
+  - dimension_id: reflective_practice
+    name: Reflective Practice
+    description: >
+      Examine one's own behavior, question assumptions, consider alternative
+      approaches, learn from outcomes, recognize recurring patterns, and
+      deliberately experiment with new behaviors.
+
+stages:
+  - stage_id: SCL-01
+    name: Establish My Practice
+    typical_days: 1-7
+    purpose: >
+      Establish the practitioner's professional baseline and development
+      objectives.
+    objectives:
+      - Explore the current professional role and context
+      - Identify perceived strengths and development objectives
+      - Surface the practitioner's Change Management philosophy and approach
+      - Identify challenging professional situations
+      - Record an initial self-reflection across the six development dimensions
+
+  - stage_id: SCL-02
+    name: Observe My Practice
+    typical_days: 8-14
+    purpose: >
+      Examine real workplace situations without prematurely declaring strengths
+      or deficiencies.
+    objectives:
+      - Bring real Change Management situations into coaching
+      - Describe decisions, reasoning, and behaviors
+      - Reflect on outcomes and what could have been done differently
+      - Use Situation → interpretation → approach → behavior → outcome → reflection
+      - Treat one occurrence as an observation, repeated evidence as a pattern
+
+  - stage_id: SCL-03
+    name: Recognize Patterns
+    typical_days: 15-21
+    purpose: >
+      Identify potentially recurring patterns across multiple experiences.
+    objectives:
+      - Connect observations across multiple situations
+      - Distinguish isolated events from recurring behaviors
+      - Identify potential strengths and development opportunities
+      - Validate interpretations collaboratively with the practitioner
+      - Treat patterns as hypotheses to explore, not declarations of fact
+
+  - stage_id: SCL-04
+    name: Deliberate Practice
+    typical_days: 22-28
+    purpose: >
+      Convert meaningful developmental observations into intentional workplace
+      experiments.
+    objectives:
+      - Select a focused development area
+      - Identify a small behavior or approach to try
+      - Apply the experiment during real work
+      - Establish a practical development commitment
+      - Avoid artificial homework when real workplace application is available
+
+  - stage_id: SCL-05
+    name: Evaluate Outcomes
+    typical_days: 29-35
+    purpose: >
+      Reflect on the results of deliberate practice and refine the approach.
+    objectives:
+      - Revisit previous deliberate-practice experiments
+      - Describe what happened and how stakeholders or the situation responded
+      - Identify what the practitioner learned
+      - Decide whether to retain, adapt, or abandon the approach
+      - Follow the sequence coaching → intentional behavior → application → outcome → reflection
+
+  - stage_id: SCL-06
+    name: Demonstrate Growth
+    typical_days: 36-40
+    purpose: >
+      Develop an evidence-based understanding of professional growth over time
+      and prepare the next development cycle.
+    objectives:
+      - Review accumulated experiences
+      - Identify demonstrated development and continuing needs
+      - Update development priorities
+      - Establish the next area of deliberate practice
+      - Use language of demonstrated growth, not permanent mastery
