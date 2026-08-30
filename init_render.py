@@ -69,110 +69,27 @@ def init_render_database():
             print(f"✗ Error checking existing data: {e}")
             return False
         
-        def reconcile_catalog():
-            """
-            Ensure the canonical Information Domains and runtime-ready pathways exist.
-            Reconciles any duplicate 'Change Management' domain into
-            'Organizational Change Management' and repoints associated records.
-            """
-            small_biz = InformationDomain.query.filter_by(name='Small Business').first()
-            if not small_biz:
-                small_biz = InformationDomain(
-                    name='Small Business',
-                    description='Small business coaching and recovery pathways',
-                    status='active'
-                )
-                db.session.add(small_biz)
-                db.session.flush()
-                print("  ✓ Created Information Domain: Small Business")
-            else:
-                print("  ✓ Small Business domain already exists")
-            
-            ocm = InformationDomain.query.filter_by(name='Organizational Change Management').first()
-            if not ocm:
-                ocm = InformationDomain(
-                    name='Organizational Change Management',
-                    description='Professional development pathways for Change Management practitioners',
-                    status='active'
-                )
-                db.session.add(ocm)
-                db.session.flush()
-                print("  ✓ Created Information Domain: Organizational Change Management")
-            else:
-                print("  ✓ Organizational Change Management domain already exists")
-            
-            # Reconcile any legacy duplicate 'Change Management' domain
-            legacy_cm = InformationDomain.query.filter_by(name='Change Management').first()
-            if legacy_cm:
-                if ocm and legacy_cm.id != ocm.id:
-                    for p in Pathway.query.filter_by(domain_id=legacy_cm.id).all():
-                        p.domain_id = ocm.id
-                        print(f"  ✓ Reassigned pathway {p.pathway_id} from 'Change Management' to 'Organizational Change Management'")
-                    for access in AdvisorDomainAccess.query.filter_by(domain_id=legacy_cm.id).all():
-                        existing = AdvisorDomainAccess.query.filter_by(
-                            advisor_id=access.advisor_id,
-                            domain_id=ocm.id
-                        ).first()
-                        if not existing:
-                            access.domain_id = ocm.id
-                        else:
-                            db.session.delete(access)
-                        print(f"  ✓ Reconciled advisor domain access from 'Change Management' to 'Organizational Change Management'")
-                    db.session.flush()
-                    # Only remove the duplicate if it no longer has child records
-                    remaining_pathways = Pathway.query.filter_by(domain_id=legacy_cm.id).count()
-                    remaining_access = AdvisorDomainAccess.query.filter_by(domain_id=legacy_cm.id).count()
-                    if remaining_pathways == 0 and remaining_access == 0 and not legacy_cm.components:
-                        db.session.delete(legacy_cm)
-                        print("  ✓ Removed duplicate 'Change Management' Information Domain")
-                    else:
-                        legacy_cm.status = 'inactive'
-                        print("  ✓ Deactivated duplicate 'Change Management' Information Domain (contains other records)")
-                    db.session.flush()
-            
-            sb_pathway = Pathway.query.filter_by(pathway_id='PATHWAY-001').first()
-            if not sb_pathway:
-                sb_pathway = Pathway(
-                    pathway_id='PATHWAY-001',
-                    name='Stabilization and Recovery',
-                    description='Small business stabilization and recovery plan',
-                    status='active',
-                    domain_id=small_biz.id,
-                    package_slug='recovery_stabilization'
-                )
-                db.session.add(sb_pathway)
-                print("  ✓ Created Pathway: PATHWAY-001 (Stabilization and Recovery)")
-            else:
-                sb_pathway.domain_id = small_biz.id
-                sb_pathway.status = 'active'
-                print("  ✓ Pathway PATHWAY-001 already exists")
-            
-            scl_pathway = Pathway.query.filter_by(pathway_id='PATHWAY-002').first()
-            if not scl_pathway:
-                scl_pathway = Pathway(
-                    pathway_id='PATHWAY-002',
-                    name='Senior Change Leadership',
-                    description='Senior Change Leadership professional development pathway',
-                    status='active',
-                    domain_id=ocm.id,
-                    package_slug='senior_change_leadership'
-                )
-                db.session.add(scl_pathway)
-                print("  ✓ Created Pathway: PATHWAY-002 (Senior Change Leadership)")
-            else:
-                scl_pathway.domain_id = ocm.id
-                scl_pathway.status = 'active'
-                print("  ✓ Pathway PATHWAY-002 already exists")
-            
-            db.session.commit()
-            return small_biz, ocm
-        
         # Step 3: Reconcile catalog (always idempotent)
         print()
         print("Step 3: Reconciling pathway catalog...")
         
         try:
-            small_biz_domain, ocm_domain = reconcile_catalog()
+            from catalog_reconciliation import (
+                reconcile_catalog as reconcile_runtime_catalog,
+                reconcile_advisor_access,
+                AmbiguousDomainError
+            )
+            
+            catalog_results = reconcile_runtime_catalog(db, load_pathway)
+            for kind, msg in catalog_results:
+                print(f"  [{kind}] {msg}")
+            
+            # Reconcile Rick's OCM access idempotently (does nothing if user not found)
+            access_results = reconcile_advisor_access(db)
+            for kind, msg in access_results:
+                print(f"  [{kind}] {msg}")
+            
+            db.session.commit()
             
             if not seed_users:
                 print("  ✓ Catalog reconciled; user seed skipped")
@@ -182,6 +99,10 @@ def init_render_database():
                 print("=" * 60)
                 return True
             
+        except AmbiguousDomainError as e:
+            db.session.rollback()
+            print(f"✗ Ambiguous domain state; manual review required: {e}")
+            return False
         except Exception as e:
             db.session.rollback()
             print(f"✗ Error reconciling catalog: {e}")

@@ -534,29 +534,12 @@ def admin_assignment_new(client_id):
             Pathway.status == 'active',
             InformationDomain.status == 'active'
         )
-        domain_ids = []
         if advisor and advisor.domain_access:
             domain_ids = [a.domain_id for a in advisor.domain_access]
             if domain_ids:
                 base_query = base_query.filter(Pathway.domain_id.in_(domain_ids))
         pathways = base_query.order_by(Pathway.name).all()
-        active_ids = [p.pathway_id for p in pathways]
-        runtime_ready_ids = [p.pathway_id for p in pathways if is_pathway_runtime_ready(p.pathway_id)]
-        not_ready_ids = [pid for pid in active_ids if pid not in runtime_ready_ids]
-        eligible = [p for p in pathways if p.pathway_id in runtime_ready_ids]
-
-        logging.info(
-            "ASSIGNMENT_DIAGNOSTIC advisor_id=%s domain_ids=%s "
-            "active_pathways=%s runtime_ready=%s not_ready=%s eligible=%s",
-            getattr(advisor, 'id', None),
-            domain_ids,
-            active_ids,
-            runtime_ready_ids,
-            not_ready_ids,
-            [p.pathway_id for p in eligible]
-        )
-
-        return eligible
+        return [p for p in pathways if is_pathway_runtime_ready(p.pathway_id)]
     
     selected_advisor = advisors[0] if advisors else None
     available_pathways = get_advisor_pathways(selected_advisor)
@@ -2032,6 +2015,38 @@ def create_admin():
     db.session.commit()
     print(f'Admin user created: {email}')
     print('Change the default password immediately.')
+
+
+@app.cli.command('reconcile-catalog')
+def reconcile_catalog_command(dry_run=False):
+    """
+    Reconcile runtime-ready pathway packages with the persistent catalog.
+
+    Safe to run against an existing production database. With --dry-run it
+    reports what would change without writing to the database.
+    """
+    from catalog_reconciliation import (
+        reconcile_catalog as reconcile_runtime_catalog,
+        reconcile_advisor_access,
+        AmbiguousDomainError
+    )
+    from coaching.engine import load_pathway
+
+    try:
+        catalog_results = reconcile_runtime_catalog(db, load_pathway, dry_run=dry_run)
+        access_results = reconcile_advisor_access(db, dry_run=dry_run)
+    except AmbiguousDomainError as e:
+        raise click.ClickException(f"Reconciliation stopped: {e}")
+
+    print("Catalog reconciliation results:")
+    for kind, msg in catalog_results + access_results:
+        print(f"  [{kind}] {msg}")
+
+    if dry_run:
+        print("DRY RUN: no changes committed")
+    else:
+        db.session.commit()
+        print("Catalog reconciliation committed")
 
 
 def bootstrap_admin():
