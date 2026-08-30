@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, date
 from flask import Flask, render_template, redirect, url_for, request, flash, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from dotenv import load_dotenv
-from models import db, User, Advisor, Client, Business, Engagement, PathwayState, Commitment, Risk, SignificantEvent, LearningRecord, CoachingObservation, Session, AdvisorGuidance, AdvisorAttention, SessionMessage, InformationDomain, Pathway, DomainComponent
+from models import db, User, Advisor, Client, Business, Engagement, PathwayState, Commitment, Risk, SignificantEvent, LearningRecord, CoachingObservation, Session, AdvisorGuidance, AdvisorAttention, SessionMessage, InformationDomain, Pathway, DomainComponent, AdvisorDomainAccess
 from coaching.ai_service import AIService, AIServiceError
 from coaching.context import build_coaching_context, format_context_for_display
 from coaching.engine import load_pathway
@@ -529,10 +529,19 @@ def admin_assignment_new(client_id):
         User.active.is_(True)
     ).all()
     
-    available_pathways = db.session.query(Pathway).join(InformationDomain).filter(
-        Pathway.status == 'active',
-        InformationDomain.status == 'active'
-    ).order_by(Pathway.name).all()
+    def get_advisor_pathways(advisor=None):
+        base_query = db.session.query(Pathway).join(InformationDomain).filter(
+            Pathway.status == 'active',
+            InformationDomain.status == 'active'
+        )
+        if advisor and advisor.domain_access:
+            domain_ids = [a.domain_id for a in advisor.domain_access]
+            if domain_ids:
+                base_query = base_query.filter(Pathway.domain_id.in_(domain_ids))
+        return base_query.order_by(Pathway.name).all()
+    
+    available_pathways = get_advisor_pathways()
+    selected_advisor = None
     
     if request.method == 'POST':
         advisor_id = request.form.get('advisor_id', type=int)
@@ -546,14 +555,13 @@ def admin_assignment_new(client_id):
                                  advisors=advisors,
                                  available_pathways=available_pathways)
         
-        pathway_record = db.session.query(Pathway).join(InformationDomain).filter(
-            Pathway.pathway_id == pathway_id,
-            Pathway.status == 'active',
-            InformationDomain.status == 'active'
-        ).first()
+        selected_advisor = advisor
+        available_pathways = get_advisor_pathways(advisor)
+        
+        pathway_record = next((p for p in available_pathways if p.pathway_id == pathway_id), None)
         
         if not pathway_record:
-            flash('Invalid pathway selected.', 'error')
+            flash('Invalid pathway selected for this advisor.', 'error')
             return render_template('admin_assignment_new.html',
                                  client=client,
                                  advisors=advisors,

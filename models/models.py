@@ -38,6 +38,27 @@ class Advisor(db.Model):
     
     engagements = db.relationship('Engagement', backref='advisor', lazy=True)
     advisor_guidance = db.relationship('AdvisorGuidance', backref='advisor', lazy=True)
+    domain_access = db.relationship(
+        'AdvisorDomainAccess',
+        backref='advisor',
+        lazy=True,
+        cascade='all, delete-orphan'
+    )
+
+
+class AdvisorDomainAccess(db.Model):
+    __tablename__ = 'advisor_domain_access'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    advisor_id = db.Column(db.Integer, db.ForeignKey('advisors.id'), nullable=False)
+    domain_id = db.Column(db.Integer, db.ForeignKey('information_domains.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    
+    __table_args__ = (
+        db.UniqueConstraint('advisor_id', 'domain_id', name='uix_advisor_domain'),
+    )
+    
+    domain = db.relationship('InformationDomain', backref='advisor_access')
 
 
 class Client(db.Model):

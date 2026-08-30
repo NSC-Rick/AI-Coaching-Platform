@@ -34,10 +34,12 @@ def init_render_database():
     
     # Import app and models within function to ensure proper context
     from app import app, db
+    from coaching.engine import load_pathway
     from models import (
         User, Advisor, Client, Business, Engagement, PathwayState,
         Commitment, Risk, SignificantEvent, LearningRecord,
-        CoachingObservation, Session, AdvisorGuidance, AdvisorAttention
+        CoachingObservation, Session, AdvisorGuidance, AdvisorAttention,
+        InformationDomain, Pathway, AdvisorDomainAccess
     )
     
     with app.app_context():
@@ -79,6 +81,46 @@ def init_render_database():
         print("Step 3: Seeding PoC test data...")
         
         try:
+            # Seed Information Domains and Pathway catalog
+            small_biz_domain = InformationDomain(
+                name='Small Business',
+                description='Small business coaching and recovery pathways',
+                status='active'
+            )
+            db.session.add(small_biz_domain)
+            db.session.flush()
+            
+            change_mgmt_domain = InformationDomain(
+                name='Change Management',
+                description='Professional development pathways for Change Management practitioners',
+                status='active'
+            )
+            db.session.add(change_mgmt_domain)
+            db.session.flush()
+            
+            sb_pathway = Pathway(
+                pathway_id='PATHWAY-001',
+                name='Stabilization and Recovery',
+                description='Small business stabilization and recovery plan',
+                status='active',
+                domain_id=small_biz_domain.id,
+                package_slug='recovery_stabilization'
+            )
+            db.session.add(sb_pathway)
+            
+            cm_pathway = Pathway(
+                pathway_id='PATHWAY-002',
+                name='Senior Change Leadership',
+                description='Senior Change Leadership professional development pathway',
+                status='active',
+                domain_id=change_mgmt_domain.id,
+                package_slug='senior_change_leadership'
+            )
+            db.session.add(cm_pathway)
+            db.session.flush()
+            
+            print("  ✓ Seeded Information Domains and Pathways")
+            
             # Create Advisor User
             advisor_user = User(
                 email='ronda@example.com',
@@ -320,6 +362,33 @@ def init_render_database():
             
             print("  ✓ Created client B: michael@example.com (Chen's Bakery)")
             
+            # Create Advisor Rick (Change Management advisor)
+            advisor_rick_user = User(
+                email='rick.daniell@example.com',
+                role='ADVISOR',
+                active=True
+            )
+            advisor_rick_user.set_password('advisor123')
+            db.session.add(advisor_rick_user)
+            db.session.flush()
+            
+            advisor_rick = Advisor(
+                user_id=advisor_rick_user.id,
+                first_name='Rick',
+                last_name='Daniell'
+            )
+            db.session.add(advisor_rick)
+            db.session.flush()
+            
+            rick_cm_access = AdvisorDomainAccess(
+                advisor_id=advisor_rick.id,
+                domain_id=change_mgmt_domain.id
+            )
+            db.session.add(rick_cm_access)
+            db.session.flush()
+            
+            print("  ✓ Created advisor: rick.daniell@example.com (Change Management)")
+            
             # Create Client C (Rick) — Senior Change Leadership field experiment
             client_c_user = User(
                 email='rick@example.com',
@@ -347,21 +416,27 @@ def init_render_database():
             )
             db.session.add(business_c)
             
+            # Load PATHWAY-002 package to derive stage and duration like the assignment route
+            scl_data = load_pathway('PATHWAY-002')
+            scl_first_stage = scl_data['manifest']['stages'][0]['stage_id']
+            scl_duration = scl_data['manifest'].get('default_duration_days', 30)
+            scl_version = scl_data['manifest'].get('version', '0.1')
+            
             engagement_c = Engagement(
                 client_id=client_c.id,
-                advisor_id=advisor.id,
+                advisor_id=advisor_rick.id,
                 pathway_id='PATHWAY-002',
-                pathway_version='0.1',
+                pathway_version=scl_version,
                 status='active',
                 start_date=date(2026, 9, 1),
-                target_end_date=date(2026, 9, 30)
+                target_end_date=date(2026, 9, 1) + timedelta(days=scl_duration)
             )
             db.session.add(engagement_c)
             db.session.flush()
             
             pathway_state_c = PathwayState(
                 engagement_id=engagement_c.id,
-                current_stage_id='SCL-01',
+                current_stage_id=scl_first_stage,
                 current_day=1,
                 current_focus='Establish baseline for September Senior Change Leadership field experiment',
                 current_priority_summary='Complete conversational baseline, identify strengths and development objectives, and begin Stage 1 reflection'
@@ -390,6 +465,10 @@ def init_render_database():
         print()
         print("Advisor:")
         print("  Email: ronda@example.com")
+        print("  Password: advisor123")
+        print()
+        print("Advisor Rick (Change Management):")
+        print("  Email: rick.daniell@example.com")
         print("  Password: advisor123")
         print()
         print("Client A (Sarah's Hardware):")
