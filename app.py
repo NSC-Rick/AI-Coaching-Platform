@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from models import db, User, Advisor, Client, Business, Engagement, PathwayState, Commitment, Risk, SignificantEvent, LearningRecord, CoachingObservation, Session, AdvisorGuidance, AdvisorAttention, SessionMessage, InformationDomain, Pathway, DomainComponent, AdvisorDomainAccess
 from coaching.ai_service import AIService, AIServiceError
 from coaching.context import build_coaching_context, format_context_for_display
-from coaching.engine import load_pathway
+from coaching.engine import load_pathway, is_pathway_runtime_ready
 from coaching.prompts import build_coaching_system_prompt, build_extraction_prompt
 from coaching.validator import ExtractionValidator, ValidationError
 from coaching.persistence import apply_extraction_updates, PersistenceError
@@ -538,7 +538,8 @@ def admin_assignment_new(client_id):
             domain_ids = [a.domain_id for a in advisor.domain_access]
             if domain_ids:
                 base_query = base_query.filter(Pathway.domain_id.in_(domain_ids))
-        return base_query.order_by(Pathway.name).all()
+        pathways = base_query.order_by(Pathway.name).all()
+        return [p for p in pathways if is_pathway_runtime_ready(p.pathway_id)]
     
     available_pathways = get_advisor_pathways()
     selected_advisor = None
@@ -758,14 +759,10 @@ def admin_domain_detail(domain_id):
         ).count()
         component_counts[component_type] = count
     
-    pathways_runtime = []
-    for p in domain.pathways:
-        runtime_ready = True
-        try:
-            load_pathway(p.pathway_id)
-        except Exception:
-            runtime_ready = False
-        pathways_runtime.append({'pathway': p, 'runtime_ready': runtime_ready})
+    pathways_runtime = [
+        {'pathway': p, 'runtime_ready': is_pathway_runtime_ready(p.pathway_id)}
+        for p in domain.pathways
+    ]
     
     return render_template('admin_domain_detail.html',
                          domain=domain,

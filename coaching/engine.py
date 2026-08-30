@@ -110,3 +110,19 @@ def get_milestones_for_stage(pathway_data, stage_id):
     all_milestones = milestones_data.get('milestones', [])
     
     return [m for m in all_milestones if m.get('stage_id') == stage_id]
+
+
+def is_pathway_runtime_ready(pathway_id):
+    """
+    Determine whether a registered pathway has an executable package.
+
+    Returns True if load_pathway succeeds and validation passes.
+    Returns False for unknown or unloadable pathway IDs.
+    """
+    try:
+        load_pathway(pathway_id)
+        return True
+    except PathwayLoadError:
+        return False
+    except PathwayValidationError:
+        return False

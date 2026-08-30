@@ -26,7 +26,7 @@ class TestSCL001PathwayDefinition(unittest.TestCase):
         self.manifest = self.pathway_data['manifest']
 
     def test_change_management_domain_present(self):
-        self.assertEqual(self.manifest['domain'], 'Change Management')
+        self.assertEqual(self.manifest['domain'], 'Organizational Change Management')
 
     def test_senior_change_leadership_pathway_loads(self):
         self.assertIsNotNone(self.pathway_data)
@@ -103,7 +103,7 @@ class TestSCL001RuntimeIntegration(unittest.TestCase):
 
         self.assertEqual(runtime['pathway']['id'], 'PATHWAY-002')
         self.assertEqual(runtime['pathway']['name'], 'Senior Change Leadership')
-        self.assertEqual(runtime['pathway']['domain'], 'Change Management')
+        self.assertEqual(runtime['pathway']['domain'], 'Organizational Change Management')
         self.assertEqual(runtime['current_stage']['id'], 'SCL-01')
         self.assertEqual(runtime['current_stage']['name'], 'Establish My Practice')
 

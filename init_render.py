@@ -59,69 +59,141 @@ def init_render_database():
         try:
             user_count = User.query.count()
             print(f"  Found {user_count} users in database")
-            
-            if user_count > 0:
-                print()
-                print("✓ Database already contains data")
-                print("  Skipping seed data to avoid duplicates")
-                print()
-                print("=" * 60)
-                print("INITIALIZATION COMPLETE (existing data preserved)")
-                print("=" * 60)
-                return True
-            
-            print("  Database is empty - proceeding with seed data")
+            seed_users = (user_count == 0)
+            if not seed_users:
+                print("  Database contains users - user seed will be skipped")
+            else:
+                print("  Database is empty - proceeding with full seed data")
             
         except Exception as e:
             print(f"✗ Error checking existing data: {e}")
             return False
         
-        # Step 3: Seed initial PoC data
+        def reconcile_catalog():
+            """
+            Ensure the canonical Information Domains and runtime-ready pathways exist.
+            Reconciles any duplicate 'Change Management' domain into
+            'Organizational Change Management' and repoints associated records.
+            """
+            small_biz = InformationDomain.query.filter_by(name='Small Business').first()
+            if not small_biz:
+                small_biz = InformationDomain(
+                    name='Small Business',
+                    description='Small business coaching and recovery pathways',
+                    status='active'
+                )
+                db.session.add(small_biz)
+                db.session.flush()
+                print("  ✓ Created Information Domain: Small Business")
+            else:
+                print("  ✓ Small Business domain already exists")
+            
+            ocm = InformationDomain.query.filter_by(name='Organizational Change Management').first()
+            if not ocm:
+                ocm = InformationDomain(
+                    name='Organizational Change Management',
+                    description='Professional development pathways for Change Management practitioners',
+                    status='active'
+                )
+                db.session.add(ocm)
+                db.session.flush()
+                print("  ✓ Created Information Domain: Organizational Change Management")
+            else:
+                print("  ✓ Organizational Change Management domain already exists")
+            
+            # Reconcile any legacy duplicate 'Change Management' domain
+            legacy_cm = InformationDomain.query.filter_by(name='Change Management').first()
+            if legacy_cm:
+                if ocm and legacy_cm.id != ocm.id:
+                    for p in Pathway.query.filter_by(domain_id=legacy_cm.id).all():
+                        p.domain_id = ocm.id
+                        print(f"  ✓ Reassigned pathway {p.pathway_id} from 'Change Management' to 'Organizational Change Management'")
+                    for access in AdvisorDomainAccess.query.filter_by(domain_id=legacy_cm.id).all():
+                        existing = AdvisorDomainAccess.query.filter_by(
+                            advisor_id=access.advisor_id,
+                            domain_id=ocm.id
+                        ).first()
+                        if not existing:
+                            access.domain_id = ocm.id
+                        else:
+                            db.session.delete(access)
+                        print(f"  ✓ Reconciled advisor domain access from 'Change Management' to 'Organizational Change Management'")
+                    db.session.flush()
+                    # Only remove the duplicate if it no longer has child records
+                    remaining_pathways = Pathway.query.filter_by(domain_id=legacy_cm.id).count()
+                    remaining_access = AdvisorDomainAccess.query.filter_by(domain_id=legacy_cm.id).count()
+                    if remaining_pathways == 0 and remaining_access == 0 and not legacy_cm.components:
+                        db.session.delete(legacy_cm)
+                        print("  ✓ Removed duplicate 'Change Management' Information Domain")
+                    else:
+                        legacy_cm.status = 'inactive'
+                        print("  ✓ Deactivated duplicate 'Change Management' Information Domain (contains other records)")
+                    db.session.flush()
+            
+            sb_pathway = Pathway.query.filter_by(pathway_id='PATHWAY-001').first()
+            if not sb_pathway:
+                sb_pathway = Pathway(
+                    pathway_id='PATHWAY-001',
+                    name='Stabilization and Recovery',
+                    description='Small business stabilization and recovery plan',
+                    status='active',
+                    domain_id=small_biz.id,
+                    package_slug='recovery_stabilization'
+                )
+                db.session.add(sb_pathway)
+                print("  ✓ Created Pathway: PATHWAY-001 (Stabilization and Recovery)")
+            else:
+                sb_pathway.domain_id = small_biz.id
+                sb_pathway.status = 'active'
+                print("  ✓ Pathway PATHWAY-001 already exists")
+            
+            scl_pathway = Pathway.query.filter_by(pathway_id='PATHWAY-002').first()
+            if not scl_pathway:
+                scl_pathway = Pathway(
+                    pathway_id='PATHWAY-002',
+                    name='Senior Change Leadership',
+                    description='Senior Change Leadership professional development pathway',
+                    status='active',
+                    domain_id=ocm.id,
+                    package_slug='senior_change_leadership'
+                )
+                db.session.add(scl_pathway)
+                print("  ✓ Created Pathway: PATHWAY-002 (Senior Change Leadership)")
+            else:
+                scl_pathway.domain_id = ocm.id
+                scl_pathway.status = 'active'
+                print("  ✓ Pathway PATHWAY-002 already exists")
+            
+            db.session.commit()
+            return small_biz, ocm
+        
+        # Step 3: Reconcile catalog (always idempotent)
         print()
-        print("Step 3: Seeding PoC test data...")
+        print("Step 3: Reconciling pathway catalog...")
         
         try:
-            # Seed Information Domains and Pathway catalog
-            small_biz_domain = InformationDomain(
-                name='Small Business',
-                description='Small business coaching and recovery pathways',
-                status='active'
-            )
-            db.session.add(small_biz_domain)
-            db.session.flush()
+            small_biz_domain, ocm_domain = reconcile_catalog()
             
-            change_mgmt_domain = InformationDomain(
-                name='Change Management',
-                description='Professional development pathways for Change Management practitioners',
-                status='active'
-            )
-            db.session.add(change_mgmt_domain)
-            db.session.flush()
+            if not seed_users:
+                print("  ✓ Catalog reconciled; user seed skipped")
+                print()
+                print("=" * 60)
+                print("INITIALIZATION COMPLETE (existing users preserved)")
+                print("=" * 60)
+                return True
             
-            sb_pathway = Pathway(
-                pathway_id='PATHWAY-001',
-                name='Stabilization and Recovery',
-                description='Small business stabilization and recovery plan',
-                status='active',
-                domain_id=small_biz_domain.id,
-                package_slug='recovery_stabilization'
-            )
-            db.session.add(sb_pathway)
-            
-            cm_pathway = Pathway(
-                pathway_id='PATHWAY-002',
-                name='Senior Change Leadership',
-                description='Senior Change Leadership professional development pathway',
-                status='active',
-                domain_id=change_mgmt_domain.id,
-                package_slug='senior_change_leadership'
-            )
-            db.session.add(cm_pathway)
-            db.session.flush()
-            
-            print("  ✓ Seeded Information Domains and Pathways")
-            
-            # Create Advisor User
+        except Exception as e:
+            db.session.rollback()
+            print(f"✗ Error reconciling catalog: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+        
+        # Step 4: Seed initial PoC data
+        print()
+        print("Step 4: Seeding PoC test data...")
+        
+        try:
             advisor_user = User(
                 email='ronda@example.com',
                 role='ADVISOR',
@@ -382,12 +454,12 @@ def init_render_database():
             
             rick_cm_access = AdvisorDomainAccess(
                 advisor_id=advisor_rick.id,
-                domain_id=change_mgmt_domain.id
+                domain_id=ocm_domain.id
             )
             db.session.add(rick_cm_access)
             db.session.flush()
             
-            print("  ✓ Created advisor: rick.daniell@example.com (Change Management)")
+            print("  ✓ Created advisor: rick.daniell@example.com (Organizational Change Management)")
             
             # Create Client C (Rick) — Senior Change Leadership field experiment
             client_c_user = User(
@@ -467,7 +539,7 @@ def init_render_database():
         print("  Email: ronda@example.com")
         print("  Password: advisor123")
         print()
-        print("Advisor Rick (Change Management):")
+        print("Advisor Rick (Organizational Change Management):")
         print("  Email: rick.daniell@example.com")
         print("  Password: advisor123")
         print()

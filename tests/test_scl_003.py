@@ -68,10 +68,10 @@ class TestSCL003AssignmentFlow(unittest.TestCase):
         )
         db.session.add(sb_pathway)
 
-        # Change Management domain and pathway
+        # Organizational Change Management domain and pathways
         cm_domain = InformationDomain(
-            name='Change Management',
-            description='Change Management professional development',
+            name='Organizational Change Management',
+            description='Organizational Change Management professional development',
             status='active'
         )
         db.session.add(cm_domain)
@@ -86,6 +86,18 @@ class TestSCL003AssignmentFlow(unittest.TestCase):
             package_slug='senior_change_leadership'
         )
         db.session.add(scl_pathway)
+
+        # Catalog-only OCM concepts (no runtime package)
+        for cm_id in ['CM-001', 'CM-002', 'CM-003']:
+            db.session.add(Pathway(
+                pathway_id=cm_id,
+                name=f'OCM Pathway {cm_id}',
+                description='Catalog-only OCM pathway concept',
+                status='active',
+                domain_id=cm_domain.id,
+                package_slug=None
+            ))
+
         db.session.flush()
 
         # Advisor Ronda — legacy Small Business access
@@ -147,7 +159,7 @@ class TestSCL003AssignmentFlow(unittest.TestCase):
 
     def test_change_management_domain_exists(self):
         with app.app_context():
-            domain = InformationDomain.query.filter_by(name='Change Management').first()
+            domain = InformationDomain.query.filter_by(name='Organizational Change Management').first()
             self.assertIsNotNone(domain)
             self.assertEqual(domain.status, 'active')
 
@@ -156,7 +168,7 @@ class TestSCL003AssignmentFlow(unittest.TestCase):
             pathway = Pathway.query.filter_by(pathway_id='PATHWAY-002').first()
             self.assertIsNotNone(pathway)
             self.assertEqual(pathway.name, 'Senior Change Leadership')
-            self.assertEqual(pathway.domain.name, 'Change Management')
+            self.assertEqual(pathway.domain.name, 'Organizational Change Management')
             self.assertEqual(pathway.status, 'active')
 
     def test_advisor_rick_has_change_management_access(self):
@@ -164,7 +176,7 @@ class TestSCL003AssignmentFlow(unittest.TestCase):
             rick = Advisor.query.filter_by(first_name='Rick', last_name='Daniell').first()
             self.assertIsNotNone(rick)
             domain_names = [a.domain.name for a in rick.domain_access]
-            self.assertIn('Change Management', domain_names)
+            self.assertIn('Organizational Change Management', domain_names)
 
     def test_assignment_new_shows_senior_change_leadership(self):
         self._login_admin()
@@ -269,6 +281,55 @@ class TestSCL003AssignmentFlow(unittest.TestCase):
         self.assertIn('Stabilization and Recovery', html)
         self.assertNotIn('Senior Change Leadership', html)
 
+    def test_catalog_cm_001_not_runtime_ready(self):
+        from coaching.engine import is_pathway_runtime_ready
+
+        self.assertFalse(is_pathway_runtime_ready('CM-001'))
+        self.assertFalse(is_pathway_runtime_ready('CM-002'))
+        self.assertFalse(is_pathway_runtime_ready('CM-003'))
+
+    def test_senior_change_leadership_runtime_ready(self):
+        from coaching.engine import is_pathway_runtime_ready
+
+        self.assertTrue(is_pathway_runtime_ready('PATHWAY-002'))
+        self.assertTrue(is_pathway_runtime_ready('PATHWAY-001'))
+
+    def test_no_duplicate_change_management_domain(self):
+        with app.app_context():
+            ocm = InformationDomain.query.filter_by(name='Organizational Change Management').first()
+            duplicate = InformationDomain.query.filter_by(name='Change Management').first()
+            self.assertIsNotNone(ocm)
+            self.assertIsNone(duplicate)
+
+    def test_assignment_dropdown_excludes_catalog_only_ocm_pathways(self):
+        self._login_admin()
+
+        # Rick has OCM access. His eligible pathways should be only PATHWAY-002
+        # because CM-001/002/003 have no runtime package.
+        response = self.client.get(f'/admin/assignments/new/{self.client_id}')
+        html = response.get_data(as_text=True)
+
+        self.assertIn('Senior Change Leadership', html)
+        self.assertNotIn('OCM Pathway CM-001', html)
+        self.assertNotIn('OCM Pathway CM-002', html)
+        self.assertNotIn('OCM Pathway CM-003', html)
+
+    def test_crafted_post_for_cm_001_is_rejected(self):
+        self._login_admin()
+
+        response = self.client.post(f'/admin/assignments/new/{self.client_id}', data={
+            'advisor_id': self.rick_id,
+            'pathway_id': 'CM-001'
+        }, follow_redirects=True)
+
+        self.assertEqual(response.status_code, 200)
+
+        with app.app_context():
+            engagement = Engagement.query.filter_by(
+                pathway_id='CM-001'
+            ).first()
+            self.assertIsNone(engagement)
+
 
 class TestSCL003RuntimeCompatibility(unittest.TestCase):
     """Ensure pathway runtime still loads the new package."""
@@ -279,6 +340,7 @@ class TestSCL003RuntimeCompatibility(unittest.TestCase):
 
         self.assertEqual(pathway_data['manifest']['pathway_id'], 'PATHWAY-002')
         self.assertEqual(len(pathway_data['manifest']['stages']), 6)
+        self.assertEqual(pathway_data['manifest']['domain'], 'Organizational Change Management')
 
     def test_recovery_stabilization_package_loads(self):
         from coaching.engine import load_pathway
