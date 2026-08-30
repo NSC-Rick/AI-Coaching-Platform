@@ -534,12 +534,29 @@ def admin_assignment_new(client_id):
             Pathway.status == 'active',
             InformationDomain.status == 'active'
         )
+        domain_ids = []
         if advisor and advisor.domain_access:
             domain_ids = [a.domain_id for a in advisor.domain_access]
             if domain_ids:
                 base_query = base_query.filter(Pathway.domain_id.in_(domain_ids))
         pathways = base_query.order_by(Pathway.name).all()
-        return [p for p in pathways if is_pathway_runtime_ready(p.pathway_id)]
+        active_ids = [p.pathway_id for p in pathways]
+        runtime_ready_ids = [p.pathway_id for p in pathways if is_pathway_runtime_ready(p.pathway_id)]
+        not_ready_ids = [pid for pid in active_ids if pid not in runtime_ready_ids]
+        eligible = [p for p in pathways if p.pathway_id in runtime_ready_ids]
+
+        logging.info(
+            "ASSIGNMENT_DIAGNOSTIC advisor_id=%s domain_ids=%s "
+            "active_pathways=%s runtime_ready=%s not_ready=%s eligible=%s",
+            getattr(advisor, 'id', None),
+            domain_ids,
+            active_ids,
+            runtime_ready_ids,
+            not_ready_ids,
+            [p.pathway_id for p in eligible]
+        )
+
+        return eligible
     
     selected_advisor = advisors[0] if advisors else None
     available_pathways = get_advisor_pathways(selected_advisor)
@@ -2223,6 +2240,87 @@ def elevenlabs_post_call_webhook():
             'status': 'error',
             'message': 'Failed to process webhook'
         }), 500
+
+
+# ============================================================
+# TEMPORARY DIAGNOSTIC ROUTES (WPP-SCL-003.3)
+# ============================================================
+
+@app.route('/admin/diagnostics/assignment')
+@require_role('ADMIN')
+def admin_diagnostics_assignment():
+    """
+    Temporary diagnostic endpoint for SCL-003.3.
+
+    Returns the current catalog, domain, and advisor-access state plus an
+    eligibility trace for every advisor. This is read-only and contains no
+    passwords, API keys, or coaching content.
+    """
+    domains = InformationDomain.query.order_by(InformationDomain.name).all()
+    pathways = db.session.query(Pathway).join(InformationDomain).order_by(Pathway.name).all()
+    advisors = db.session.query(Advisor).join(User).filter(User.role == 'ADVISOR').all()
+
+    result = {
+        'information_domains': [
+            {'id': d.id, 'name': d.name, 'status': d.status}
+            for d in domains
+        ],
+        'pathways': [
+            {
+                'id': p.id,
+                'pathway_id': p.pathway_id,
+                'name': p.name,
+                'domain_id': p.domain_id,
+                'domain_name': p.domain.name if p.domain else None,
+                'status': p.status,
+                'runtime_ready': is_pathway_runtime_ready(p.pathway_id),
+            }
+            for p in pathways
+        ],
+        'advisors': []
+    }
+
+    for advisor in advisors:
+        access = [
+            {
+                'domain_id': a.domain_id,
+                'domain_name': a.domain.name if a.domain else None,
+            }
+            for a in advisor.domain_access
+        ]
+        domain_ids = [a.domain_id for a in advisor.domain_access]
+
+        base_query = db.session.query(Pathway).join(InformationDomain).filter(
+            Pathway.status == 'active',
+            InformationDomain.status == 'active'
+        )
+        if domain_ids:
+            base_query = base_query.filter(Pathway.domain_id.in_(domain_ids))
+        active_pathways = base_query.order_by(Pathway.name).all()
+
+        runtime_ready_ids = [p.pathway_id for p in active_pathways if is_pathway_runtime_ready(p.pathway_id)]
+        eligible_ids = [p.pathway_id for p in active_pathways if p.pathway_id in runtime_ready_ids]
+
+        result['advisors'].append({
+            'advisor_id': advisor.id,
+            'first_name': advisor.first_name,
+            'last_name': advisor.last_name,
+            'domain_access': access,
+            'catalog_candidates': [
+                {
+                    'id': p.id,
+                    'pathway_id': p.pathway_id,
+                    'name': p.name,
+                    'domain_id': p.domain_id,
+                    'domain_name': p.domain.name if p.domain else None,
+                }
+                for p in active_pathways
+            ],
+            'runtime_ready': runtime_ready_ids,
+            'eligible_pathways': eligible_ids
+        })
+
+    return jsonify(result)
 
 
 # ============================================================
