@@ -272,7 +272,12 @@ class VoiceService:
         Returns:
             str: Complete agent prompt with context
         """
-        prompt = f"""You are an AI Recovery Coach supporting {client_name} who owns {business_name}.
+        identity_line = (
+            f"You are an AI Recovery Coach supporting {client_name} who owns {business_name}."
+            if business_name
+            else f"You are an AI Recovery Coach supporting {client_name}."
+        )
+        prompt = f"""{identity_line}
 
 You are working within the {pathway_name} pathway, currently in {current_stage} (Day {current_day}).
 

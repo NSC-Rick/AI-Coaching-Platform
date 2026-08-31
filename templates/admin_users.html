@@ -46,6 +46,7 @@
                     <td>{{ item.profile_type }}</td>
                     <td>
                         <a href="{{ url_for('admin_user_detail', user_id=item.user.id) }}" class="btn btn-secondary">View</a>
+                        <a href="{{ url_for('admin_user_edit', user_id=item.user.id) }}" class="btn btn-secondary">Edit</a>
                         <a href="{{ url_for('admin_user_password', user_id=item.user.id) }}" class="btn btn-secondary">Reset Password</a>
                         {% if item.user.role != 'ADMIN' and item.user.id != current_user.id %}
                             {% if item.user.active %}

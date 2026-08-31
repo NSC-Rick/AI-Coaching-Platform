@@ -420,6 +420,74 @@ def admin_user_password(user_id):
     return render_template('admin_user_password.html', user=user)
 
 
+@app.route('/admin/users/<int:user_id>/edit', methods=['GET', 'POST'])
+@require_role('ADMIN')
+def admin_user_edit(user_id):
+    user = db.session.get(User, user_id)
+    if not user:
+        flash('User not found.', 'error')
+        return redirect(url_for('admin_users'))
+
+    if user.role == 'ADMIN' and user.id == current_user.id:
+        flash('You cannot edit your own admin profile here.', 'error')
+        return redirect(url_for('admin_users'))
+
+    client = user.client if user.role == 'CLIENT' else None
+    advisor = user.advisor if user.role == 'ADVISOR' else None
+    business = client.business if client else None
+
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip()
+        first_name = request.form.get('first_name', '').strip()
+        last_name = request.form.get('last_name', '').strip()
+        business_name = request.form.get('business_name', '').strip()
+
+        if not email:
+            flash('Email is required.', 'error')
+            return render_template('admin_user_edit.html', user=user, client=client, advisor=advisor, business=business)
+
+        if email != user.email and User.query.filter_by(email=email).first():
+            flash('A user with that email already exists.', 'error')
+            return render_template('admin_user_edit.html', user=user, client=client, advisor=advisor, business=business)
+
+        try:
+            user.email = email
+
+            if client:
+                if first_name:
+                    client.first_name = first_name
+                if last_name:
+                    client.last_name = last_name
+
+                if business_name:
+                    if business:
+                        business.business_name = business_name
+                    else:
+                        business = Business(
+                            client_id=client.id,
+                            business_name=business_name
+                        )
+                        db.session.add(business)
+                # Intentionally do not delete a Business if the name is blank;
+                # empty input leaves existing business unchanged.
+
+            elif advisor:
+                if first_name:
+                    advisor.first_name = first_name
+                if last_name:
+                    advisor.last_name = last_name
+
+            db.session.commit()
+            flash('User updated successfully.', 'success')
+            return redirect(url_for('admin_user_detail', user_id=user.id))
+        except Exception as e:
+            db.session.rollback()
+            flash('Failed to update user. Please try again.', 'error')
+            logging.error(f'Error updating user {user_id}: {str(e)}')
+
+    return render_template('admin_user_edit.html', user=user, client=client, advisor=advisor, business=business)
+
+
 @app.route('/admin/assignments')
 @require_role('ADMIN')
 def admin_assignments():
@@ -1559,9 +1627,13 @@ def init_voice_session(engagement_id):
             engagement_id=engagement_id
         )
         
+        client = engagement.client
+        business = client.business
+        business_name = business.business_name if business else ''
+
         session_config = voice_service.build_session_config(
-            client_name=engagement.client.first_name,
-            business_name=engagement.client.business.business_name,
+            client_name=client.first_name,
+            business_name=business_name,
             pathway_data=pathway_data,
             current_stage=pathway_state.current_stage_id if pathway_state else 'RS-01',
             current_day=pathway_state.current_day if pathway_state else 1,

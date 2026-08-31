@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Edit User - Admin{% endblock %}
+
+{% block content %}
+<div class="admin-portal">
+    <div class="welcome-section">
+        <h2>Edit User</h2>
+        <p class="subtitle">Update profile information for {{ user.email }}.</p>
+    </div>
+
+    <div style="margin-bottom: 1rem;">
+        <a href="{{ url_for('admin_users') }}" class="btn btn-secondary">&larr; Users</a>
+        <a href="{{ url_for('admin_user_detail', user_id=user.id) }}" class="btn btn-secondary">View Profile</a>
+    </div>
+
+    <div class="card">
+        <form method="POST">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" value="{{ user.email }}" required>
+            </div>
+
+            {% if user.role == 'CLIENT' %}
+            <div class="form-group">
+                <label for="first_name">First Name</label>
+                <input type="text" id="first_name" name="first_name" value="{{ client.first_name if client else '' }}">
+            </div>
+            <div class="form-group">
+                <label for="last_name">Last Name</label>
+                <input type="text" id="last_name" name="last_name" value="{{ client.last_name if client else '' }}">
+            </div>
+            <div class="form-group">
+                <label for="business_name">Business / Organization Name</label>
+                <input type="text" id="business_name" name="business_name" value="{{ business.business_name if business else '' }}">
+                <p class="help-text">Leave blank if no business context is needed.</p>
+            </div>
+            {% elif user.role == 'ADVISOR' %}
+            <div class="form-group">
+                <label for="first_name">First Name</label>
+                <input type="text" id="first_name" name="first_name" value="{{ advisor.first_name if advisor else '' }}">
+            </div>
+            <div class="form-group">
+                <label for="last_name">Last Name</label>
+                <input type="text" id="last_name" name="last_name" value="{{ advisor.last_name if advisor else '' }}">
+            </div>
+            {% endif %}
+
+            <div class="form-group">
+                <label for="role">Role</label>
+                <input type="text" id="role" value="{% if user.role == 'CLIENT' %}Client{% elif user.role == 'ADVISOR' %}Advisor{% else %}Administrator{% endif %}" disabled>
+                <input type="hidden" name="role" value="{{ user.role }}">
+            </div>
+
+            <div class="form-group">
+                <label for="status">Status</label>
+                <input type="text" id="status" value="{% if user.active %}Active{% else %}Inactive{% endif %}" disabled>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
